@@ -1,0 +1,30 @@
+{
+  "projectName": "cms",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "pnpm",
+  "includeExamples": true,
+  "tailwind": true,
+  "addOnOptions": {
+    "drizzle": {
+      "database": "postgresql"
+    }
+  },
+  "envVarValues": {},
+  "git": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "nitro",
+    "compiler",
+    "drizzle",
+    "form",
+    "shadcn",
+    "table",
+    "better-auth",
+    "tanstack-query",
+    "events"
+  ]
+}
