@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { LogOutIcon, UserKeyIcon } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
@@ -38,16 +38,12 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { seo } from "@/lib/seo";
 
-export const Route = createFileRoute("/")({
-	component: HomePage,
-	head: () => ({
-		meta: [...seo({ title: "Dashboard", description: "Dashboard" })],
-	}),
+export const Route = createFileRoute("/(authed)")({
+	component: RouteComponent,
 });
 
-function HomePage() {
+function RouteComponent() {
 	return (
 		<SidebarProvider>
 			<AppSidebar />
@@ -117,12 +113,7 @@ function HomePage() {
 					</DropdownMenu>
 				</header>
 				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-					<div className="grid auto-rows-min gap-4 md:grid-cols-3">
-						<div className="aspect-video rounded-xl bg-muted/50" />
-						<div className="aspect-video rounded-xl bg-muted/50" />
-						<div className="aspect-video rounded-xl bg-muted/50" />
-					</div>
-					<div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+					<Outlet />
 				</div>
 			</SidebarInset>
 		</SidebarProvider>
@@ -173,13 +164,10 @@ function NavItems() {
 					item.label.toLowerCase().includes(searchQuery),
 				);
 
-		// Keep the group intact but only with children that matched the query
 		return { ...group, children: filteredChildren };
-	}).filter((group) => group.children.length > 0); // Remove groups that have no matching children
+	}).filter((group) => group.children.length > 0);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		// Update exactly what the user typed so spaces work properly.
-		// (e.g. if we trimmed here, typing "User R" would lose the space!)
 		setSearch(e.target.value);
 	};
 
@@ -203,7 +191,13 @@ function NavItems() {
 						{m.children.map((item) => (
 							<SidebarMenuItem key={item.label}>
 								<SidebarMenuButton asChild>
-									<Link to={item.href}>
+									<Link
+										to={item.href}
+										activeOptions={item.activeOptions}
+										activeProps={{
+											className: `font-bold text-sidebar-primary`,
+										}}
+									>
 										<item.icon />
 										<span>{item.label}</span>
 									</Link>
