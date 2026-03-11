@@ -1,0 +1,1 @@
+ALTER TABLE "users" ALTER COLUMN "transfer_id" DROP NOT NULL;
