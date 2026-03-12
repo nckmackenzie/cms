@@ -1,6 +1,15 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
-import { LogOutIcon, UserKeyIcon } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	createFileRoute,
+	Link,
+	Outlet,
+	redirect,
+	useRouteContext,
+	useRouter,
+} from "@tanstack/react-router";
+import { Loader2Icon, LogOutIcon, UserKeyIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import {
@@ -13,7 +22,9 @@ import {
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
 import { Input } from "#/components/ui/input";
+import { logoutFn } from "#/features/auth/services/auth.api";
 import { MENU_ITEMS } from "#/lib/constants";
+import { toTitleCase } from "#/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
 	Breadcrumb,
@@ -40,10 +51,31 @@ import {
 } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/(authed)")({
+	beforeLoad: async ({ context }) => {
+		if (!context.user) {
+			throw redirect({ to: "/login" });
+		}
+		return { user: context.user };
+	},
 	component: RouteComponent,
 });
 
 function RouteComponent() {
+	const { user } = Route.useRouteContext();
+	const router = useRouter();
+	const queryClient = useQueryClient();
+	const { mutate, isPending } = useMutation({
+		mutationFn: () => logoutFn(),
+		onSuccess: async () => {
+			router.navigate({ to: "/login" });
+			router.invalidate();
+			await queryClient.invalidateQueries();
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		},
+	});
+
 	return (
 		<SidebarProvider>
 			<AppSidebar />
@@ -72,7 +104,9 @@ function RouteComponent() {
 									<AvatarImage src="https://github.com/shadcn.png" />
 									<AvatarFallback>CN</AvatarFallback>
 								</Avatar>
-								<span className="hidden md:block">Nick Mackenzie</span>
+								<span className="hidden md:block">
+									{toTitleCase(user.userName)}
+								</span>
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
@@ -90,9 +124,11 @@ function RouteComponent() {
 										<AvatarFallback className="rounded-lg">CN</AvatarFallback>
 									</Avatar>
 									<div className="grid flex-1 text-left text-sm leading-tight">
-										<span className="truncate font-medium">Nick Mackenzie</span>
-										<span className="truncate text-xs text-muted-foreground">
-											Administrator
+										<span className="truncate font-medium">
+											{toTitleCase(user.userName)}
+										</span>
+										<span className="truncate text-xs text-muted-foreground capitalize">
+											{user.userType}
 										</span>
 									</div>
 								</div>
@@ -105,14 +141,18 @@ function RouteComponent() {
 								</DropdownMenuItem>
 							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem>
-								<LogOutIcon />
+							<DropdownMenuItem disabled={isPending} onClick={() => mutate()}>
+								{isPending ? (
+									<Loader2Icon className="animate-spin" />
+								) : (
+									<LogOutIcon />
+								)}
 								Log out
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</header>
-				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+				<div className="flex flex-1 flex-col gap-4 p-4 md:p-6 max-w-(--my-max-width) mx-auto w-full">
 					<Outlet />
 				</div>
 			</SidebarInset>

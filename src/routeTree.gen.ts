@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as authedRouteRouteImport } from './routes/(authed)/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as authChangePasswordRouteImport } from './routes/(auth)/change-password'
 import { Route as authedFinanceRouteRouteImport } from './routes/(authed)/finance.route'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as authedFinanceDashboardRouteImport } from './routes/(authed)/finance.dashboard'
 
 const authedRouteRoute = authedRouteRouteImport.update({
@@ -24,15 +25,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const authLoginRoute = authLoginRouteImport.update({
+  id: '/(auth)/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authChangePasswordRoute = authChangePasswordRouteImport.update({
+  id: '/(auth)/change-password',
+  path: '/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const authedFinanceRouteRoute = authedFinanceRouteRouteImport.update({
   id: '/finance',
   path: '/finance',
   getParentRoute: () => authedRouteRoute,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const authedFinanceDashboardRoute = authedFinanceDashboardRouteImport.update({
   id: '/dashboard',
@@ -43,41 +49,51 @@ const authedFinanceDashboardRoute = authedFinanceDashboardRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/finance': typeof authedFinanceRouteRouteWithChildren
+  '/change-password': typeof authChangePasswordRoute
+  '/login': typeof authLoginRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/finance': typeof authedFinanceRouteRouteWithChildren
+  '/change-password': typeof authChangePasswordRoute
+  '/login': typeof authLoginRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(authed)': typeof authedRouteRouteWithChildren
   '/(authed)/finance': typeof authedFinanceRouteRouteWithChildren
+  '/(auth)/change-password': typeof authChangePasswordRoute
+  '/(auth)/login': typeof authLoginRoute
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/finance' | '/finance/dashboard' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/finance'
+    | '/change-password'
+    | '/login'
+    | '/finance/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/finance' | '/finance/dashboard' | '/api/auth/$'
+  to: '/' | '/finance' | '/change-password' | '/login' | '/finance/dashboard'
   id:
     | '__root__'
     | '/'
     | '/(authed)'
     | '/(authed)/finance'
+    | '/(auth)/change-password'
+    | '/(auth)/login'
     | '/(authed)/finance/dashboard'
-    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authedRouteRoute: typeof authedRouteRouteWithChildren
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  authChangePasswordRoute: typeof authChangePasswordRoute
+  authLoginRoute: typeof authLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -96,19 +112,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(auth)/login': {
+      id: '/(auth)/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/change-password': {
+      id: '/(auth)/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof authChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(authed)/finance': {
       id: '/(authed)/finance'
       path: '/finance'
       fullPath: '/finance'
       preLoaderRoute: typeof authedFinanceRouteRouteImport
       parentRoute: typeof authedRouteRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/(authed)/finance/dashboard': {
       id: '/(authed)/finance/dashboard'
@@ -146,7 +169,8 @@ const authedRouteRouteWithChildren = authedRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authedRouteRoute: authedRouteRouteWithChildren,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  authChangePasswordRoute: authChangePasswordRoute,
+  authLoginRoute: authLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

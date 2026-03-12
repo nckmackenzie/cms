@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 // type Route = keyof FileRoutesByPath;
-type Route = Pick<LinkOptions, "activeOptions" | "to">;
+export type Route = Pick<LinkOptions, "activeOptions" | "to">;
 
 type MenuItem = {
 	label: string;
@@ -32,6 +32,9 @@ type MenuItem = {
 		activeOptions?: Route["activeOptions"];
 	}>;
 };
+
+export const DEFAULT_PAGE_INDEX = 0;
+export const DEFAULT_PAGE_SIZE = 10;
 
 export const MENU_ITEMS: Array<MenuItem> = [
 	{
