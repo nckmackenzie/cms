@@ -31,7 +31,11 @@ interface SheetContextType {
 	setClose: () => void;
 }
 
-const SheetContext = createContext<SheetContextType | null>(null);
+const SheetContext = createContext<SheetContextType>({
+	isOpen: false,
+	setOpen: () => {},
+	setClose: () => {},
+});
 
 export const SheetProvider = ({ children }: SheetProviderProps) => {
 	const [isOpen, setIsOpen] = useState(false);
