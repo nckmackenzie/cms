@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { LogInIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -81,6 +81,12 @@ export function LoginPage() {
 						<field.PasswordTextField label="Password" placeholder="******" />
 					)}
 				</form.AppField>
+				<Link
+					to="/forgot-password"
+					className="text-sm text-primary hover:underline block text-right mb-4"
+				>
+					Forgot Password?
+				</Link>
 				<form.AppForm>
 					<form.SubmitButton
 						icon={<LogInIcon />}

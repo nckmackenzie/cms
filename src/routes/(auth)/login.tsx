@@ -7,19 +7,21 @@ import { LoginPage } from "#/features/auth/components/login-page";
 import { seo } from "#/lib/seo";
 import { toTitleCase } from "#/lib/utils";
 
-const getCongregations = createServerFn({ method: "GET" }).handler(async () => {
-	return db.query.congregations
-		.findMany({
-			columns: { id: true, congregationName: true },
-			orderBy: asc(congregations.congregationName),
-		})
-		.then((d) =>
-			d.map((d) => ({
-				value: d.id.toString(),
-				label: toTitleCase(d.congregationName),
-			})),
-		);
-});
+export const getCongregations = createServerFn({ method: "GET" }).handler(
+	async () => {
+		return db.query.congregations
+			.findMany({
+				columns: { id: true, congregationName: true },
+				orderBy: asc(congregations.congregationName),
+			})
+			.then((d) =>
+				d.map((c) => ({
+					value: c.id.toString(),
+					label: toTitleCase(c.congregationName),
+				})),
+			);
+	},
+);
 
 export const Route = createFileRoute("/(auth)/login")({
 	component: LoginPage,

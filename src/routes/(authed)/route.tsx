@@ -4,7 +4,6 @@ import {
 	Link,
 	Outlet,
 	redirect,
-	useRouteContext,
 	useRouter,
 } from "@tanstack/react-router";
 import { Loader2Icon, LogOutIcon, UserKeyIcon } from "lucide-react";
@@ -62,6 +61,7 @@ export const Route = createFileRoute("/(authed)")({
 
 function RouteComponent() {
 	const { user } = Route.useRouteContext();
+	const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.userName)}`;
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { mutate, isPending } = useMutation({
@@ -101,8 +101,8 @@ function RouteComponent() {
 						<DropdownMenuTrigger asChild>
 							<Button variant="ghost" className="py-6 ml-auto">
 								<Avatar>
-									<AvatarImage src="https://github.com/shadcn.png" />
-									<AvatarFallback>CN</AvatarFallback>
+									<AvatarImage src={avatarUrl} alt={user.userName} />
+									<AvatarFallback>U</AvatarFallback>
 								</Avatar>
 								<span className="hidden md:block">
 									{toTitleCase(user.userName)}
@@ -117,11 +117,8 @@ function RouteComponent() {
 							<DropdownMenuLabel className="p-0 font-normal">
 								<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
 									<Avatar className="h-8 w-8 rounded-lg">
-										<AvatarImage
-											src="https://github.com/shadcn.png"
-											alt="Nick Mackenzie"
-										/>
-										<AvatarFallback className="rounded-lg">CN</AvatarFallback>
+										<AvatarImage src={avatarUrl} alt={user.userName} />
+										<AvatarFallback className="rounded-lg">U</AvatarFallback>
 									</Avatar>
 									<div className="grid flex-1 text-left text-sm leading-tight">
 										<span className="truncate font-medium">

@@ -7,6 +7,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { getCurrentUserFn } from "#/features/auth/services/auth.api";
+import { SheetProvider } from "#/integrations/providers/sheet-provider";
+import {
+	GlobalNotFound,
+	GlobalPendingComponent,
+	RouteErrorComponent,
+} from "@/components/ui/route-components";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -45,6 +51,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 	}),
 	shellComponent: RootDocument,
+	pendingComponent: GlobalPendingComponent,
+	notFoundComponent: GlobalNotFound,
+	errorComponent: RouteErrorComponent,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -57,7 +66,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
 				<TanStackQueryProvider>
-					<TooltipProvider>{children}</TooltipProvider>
+					<TooltipProvider>
+						<SheetProvider>{children}</SheetProvider>
+					</TooltipProvider>
 					<Toaster position="top-center" />
 					<TanStackDevtools
 						config={{

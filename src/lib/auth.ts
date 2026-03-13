@@ -8,6 +8,7 @@ export type AppSessionData = {
   userType?: typeof users.$inferSelect.userType
   mustChangePassword?: boolean
   passwordResetUserId?: number
+  passwordResetReason?: 'first_login' | 'forgot_password'
 }
 
 export function useAppSession() {

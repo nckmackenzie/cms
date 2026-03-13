@@ -3,7 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "#/db";
 import { users } from "#/db/schema";
-import { changePasswordFormSchema, loginFormSchema } from "#/features/auth/services/schema";
+import {
+	changePasswordFormSchema,
+	forgotPasswordFormSchema,
+	loginFormSchema,
+} from "#/features/auth/services/schema";
 import {
 	buildPasswordResetSmsMessage,
 	generatePasswordResetCode,
@@ -35,6 +39,31 @@ type PasswordResetChallengeUser = Pick<
 	| "passwordResetCodeSentAt"
 	| "passwordResetLockedUntil"
 >;
+
+async function findUserByUsernameAndCongregation(
+	username: string,
+	congregationId: number,
+) {
+	let user = await db.query.users.findFirst({
+		where: and(
+			eq(sql`trim(lower(${users.userId}))`, username.trim().toLowerCase()),
+			eq(users.congregationId, congregationId),
+		),
+	});
+
+	if (!user) {
+		const superAdminUser = await db.query.users.findFirst({
+			where: and(
+				eq(sql`trim(lower(${users.userId}))`, username.trim().toLowerCase()),
+				eq(users.userType, "super admin"),
+			),
+		});
+
+		user = superAdminUser ?? undefined;
+	}
+
+	return user;
+}
 
 async function getPasswordResetUserOrRedirect() {
 	// biome-ignore lint/correctness/useHookAtTopLevel: <not your ordinary hook>
@@ -156,21 +185,10 @@ export const loginFn = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 
 		const congregationId = Number(data.congregationId);
-		let user = await db.query.users.findFirst({
-			where: and(
-				eq(sql`trim(lower(${users.userId}))`, data.username),
-				eq(users.congregationId, congregationId),
-			),
-		});
-		if (!user) {
-			const superAdminUser = await db.query.users.findFirst({
-				where: and(
-					eq(sql`trim(lower(${users.userId}))`, data.username),
-					eq(users.userType, "super admin")
-				),
-			});
-			user = superAdminUser ?? undefined;
-		}
+		const user = await findUserByUsernameAndCongregation(
+			data.username,
+			congregationId,
+		);
 
 		if (!user || !user.active) {
 			return failure({
@@ -187,6 +205,7 @@ export const loginFn = createServerFn({ method: "POST" })
 			await session.update({
 				mustChangePassword: true,
 				passwordResetUserId: user.id,
+				passwordResetReason: "first_login",
 			});
 
 			const issuedCode = await issuePasswordResetCode(user);
@@ -223,9 +242,52 @@ export const loginFn = createServerFn({ method: "POST" })
 		return success(undefined);
 	});
 
+export const requestPasswordResetFn = createServerFn({ method: "POST" })
+	.inputValidator(forgotPasswordFormSchema)
+	.handler(async ({ data }) => {
+		const congregationId = Number(data.congregationId);
+		const user = await findUserByUsernameAndCongregation(
+			data.username,
+			congregationId,
+		);
+
+		if (!user || !user.active || !user.contact) {
+			return success({
+				message:
+					"If the account can be reset, an SMS verification code will be sent to the registered phone number.",
+			});
+		}
+
+		// biome-ignore lint/correctness/useHookAtTopLevel: <not your ordinary hook>
+		const session = await useAppSession();
+		await session.clear();
+		await session.update({
+			mustChangePassword: true,
+			passwordResetUserId: user.id,
+			passwordResetReason: "forgot_password",
+		});
+
+		const issuedCode = await issuePasswordResetCode(user);
+
+		if (!issuedCode.success) {
+			await session.clear();
+
+			if (issuedCode.error.type === "ApplicationError") {
+				return issuedCode;
+			}
+
+			return success({
+				message:
+					"If the account can be reset, an SMS verification code will be sent to the registered phone number.",
+			});
+		}
+
+		throw redirect({ to: "/change-password" });
+	});
+
 export const getPasswordResetChallengeFn = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const { user } = await getPasswordResetUserOrRedirect();
+		const { session, user } = await getPasswordResetUserOrRedirect();
 
 		if (!user.contact) {
 			throw redirect({ to: "/login" });
@@ -239,6 +301,7 @@ export const getPasswordResetChallengeFn = createServerFn({ method: "GET" }).han
 			: null;
 
 		return {
+			reason: session.data.passwordResetReason ?? "forgot_password",
 			maskedPhone: maskPhoneNumber(user.contact),
 			expiresAt: user.passwordResetCodeExpiresAt?.toISOString() ?? null,
 			resendAvailableAt: resendAvailableAt?.toISOString() ?? null,

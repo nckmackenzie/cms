@@ -8,6 +8,11 @@ export const loginFormSchema = z.object({
 	congregationId: z.string().min(1, { error: "Select your congregation" }),
 });
 
+export const forgotPasswordFormSchema = z.object({
+	username: z.string().min(1, { error: "username is required" }),
+	congregationId: z.string().min(1, { error: "Select your congregation" }),
+});
+
 export const changePasswordFormSchema = z.object({
 	otpCode: z
 		.string()
@@ -32,4 +37,5 @@ export const changePasswordFormSchema = z.object({
 });
 
 export type LoginFormSchema = z.infer<typeof loginFormSchema>;
+export type ForgotPasswordFormSchema = z.infer<typeof forgotPasswordFormSchema>;
 export type ChangePasswordFormSchema = z.infer<typeof changePasswordFormSchema>;
