@@ -14,6 +14,17 @@ import {
 
 export const USER_TYPES = ["super admin", "admin", "standard user"] as const;
 export const userTypeEnum = pgEnum("user_type_enum", USER_TYPES);
+export const ACCOUNT_TYPES = [
+	"asset",
+	"liability",
+	"equity",
+	"income",
+	"expense",
+] as const;
+export const accountTypeEnum = pgEnum("account_type_enum", ACCOUNT_TYPES);
+export const NORMAL_BALANCES = ["debit", "credit"] as const;
+export type DebitCredit = typeof NORMAL_BALANCES[number];
+export const normalBalanceEnum = pgEnum("normal_balance_enum", NORMAL_BALANCES);
 
 export const congregations = pgTable(
 	"congregations",
@@ -70,6 +81,38 @@ export const districts = pgTable(
 	],
 );
 
+export const ledgerAccounts = pgTable(
+	"ledger_accounts",
+	{
+		id: serial("id").primaryKey(),
+		name: varchar("name", { length: 255 }).notNull(),
+		accountType: accountTypeEnum("account_type").notNull(),
+		parentId: integer("parent_id"),
+		description: varchar("description", { length: 255 }),
+		isBank: boolean("is_bank").notNull().default(false),
+		accountNo: varchar("account_no", { length: 100 }),
+		forGroup: boolean("for_group").notNull().default(false),
+		isPosting: boolean("is_posting").notNull().default(false),
+		normalBalance: normalBalanceEnum("normal_balance").notNull(),
+		isEditable: boolean("is_editable").notNull().default(true),
+		active: boolean("active").notNull().default(true),
+		congregationId: integer("congregation_id")
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("ledger_accounts_name_idx").on(table.name),
+		index("ledger_accounts_account_type_idx").on(table.accountType),
+		index("ledger_accounts_parent_id_idx").on(table.parentId),
+		index("ledger_accounts_congregation_id_idx").on(table.congregationId),
+		index("ledger_accounts_active_idx").on(table.active),
+		uniqueIndex("ledger_accounts_congregation_id_account_no_unique").on(
+			table.congregationId,
+			table.accountNo,
+		),
+	],
+);
+
 export const users = pgTable(
 	"users",
 	{
@@ -90,12 +133,17 @@ export const users = pgTable(
 		passwordResetCodeHash: varchar("password_reset_code_hash", { length: 255 }),
 		passwordResetCodeExpiresAt: timestamp("password_reset_code_expires_at"),
 		passwordResetCodeSentAt: timestamp("password_reset_code_sent_at"),
-		passwordResetAttemptCount: integer("password_reset_attempt_count").notNull().default(0),
+		passwordResetAttemptCount: integer("password_reset_attempt_count")
+			.notNull()
+			.default(0),
 		passwordResetLockedUntil: timestamp("password_reset_locked_until"),
 		// resetToken: varchar("reset_token"),
 	},
 	(table) => [
-		uniqueIndex("users_user_id_congregation_unique").on(table.userId, table.congregationId),
+		uniqueIndex("users_user_id_congregation_unique").on(
+			table.userId,
+			table.congregationId,
+		),
 		index("users_district_id_idx").on(table.districtId),
 		index("users_congregation_id_idx").on(table.congregationId),
 		index("users_role_id_idx").on(table.roleId),
@@ -104,6 +152,7 @@ export const users = pgTable(
 
 export const congregationsRelations = relations(congregations, ({ many }) => ({
 	districts: many(districts),
+	ledgerAccounts: many(ledgerAccounts),
 	users: many(users),
 }));
 
@@ -118,6 +167,24 @@ export const districtsRelations = relations(districts, ({ one, many }) => ({
 	}),
 	users: many(users),
 }));
+
+export const ledgerAccountsRelations = relations(
+	ledgerAccounts,
+	({ one, many }) => ({
+		congregation: one(congregations, {
+			fields: [ledgerAccounts.congregationId],
+			references: [congregations.id],
+		}),
+		parent: one(ledgerAccounts, {
+			fields: [ledgerAccounts.parentId],
+			references: [ledgerAccounts.id],
+			relationName: "ledger_account_parent_child",
+		}),
+		children: many(ledgerAccounts, {
+			relationName: "ledger_account_parent_child",
+		}),
+	}),
+);
 
 export const usersRelations = relations(users, ({ one }) => ({
 	congregation: one(congregations, {
