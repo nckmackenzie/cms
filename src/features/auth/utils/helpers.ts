@@ -6,6 +6,8 @@ export const PASSWORD_RESET_CODE_TTL_MINUTES = 10;
 export const PASSWORD_RESET_RESEND_COOLDOWN_SECONDS = 60;
 export const PASSWORD_RESET_MAX_ATTEMPTS = 5;
 export const PASSWORD_RESET_LOCKOUT_MINUTES = 15;
+export const LOGIN_MAX_ATTEMPTS = 3;
+export const LOGIN_LOCKOUT_MINUTES = 15;
 
 export const hashPassword = async (password: string) =>
 	await hash(password, Number(process.env.BCRYPT_ROUNDS));
@@ -86,9 +88,9 @@ export async function verifyPassword(password: string, storedHash: string) {
 	}
 
 	if (
-		storedHash.startsWith("$2a$")
-		|| storedHash.startsWith("$2b$")
-		|| storedHash.startsWith("$2x$")
+		storedHash.startsWith("$2a$") ||
+		storedHash.startsWith("$2b$") ||
+		storedHash.startsWith("$2x$")
 	) {
 		return compare(password, storedHash);
 	}

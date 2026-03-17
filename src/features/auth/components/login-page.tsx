@@ -34,6 +34,7 @@ export function LoginPage() {
 			username: "",
 			password: "",
 			congregationId: "",
+			rememberMe: false,
 		},
 		validators: {
 			onSubmit: loginFormSchema,
@@ -79,6 +80,14 @@ export function LoginPage() {
 				<form.AppField name="password">
 					{(field) => (
 						<field.PasswordTextField label="Password" placeholder="******" />
+					)}
+				</form.AppField>
+				<form.AppField name="rememberMe">
+					{(field) => (
+						<field.FormCheckbox
+							label="Remember me"
+							helperText="Keep me signed in for 30 days on this device."
+						/>
 					)}
 				</form.AppField>
 				<Link
