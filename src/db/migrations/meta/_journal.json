@@ -43,6 +43,41 @@
       "when": 1773299628424,
       "tag": "0005_high_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773423727650,
+      "tag": "0006_fresh_human_fly",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773424060746,
+      "tag": "0007_eager_stellaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773428170743,
+      "tag": "0008_natural_wild_child",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773661802492,
+      "tag": "0009_typical_rictor",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773727610551,
+      "tag": "0010_exotic_wiccan",
+      "breakpoints": true
     }
   ]
 }

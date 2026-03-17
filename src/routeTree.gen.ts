@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as authedRouteRouteImport } from './routes/(authed)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-password'
 import { Route as authChangePasswordRouteImport } from './routes/(auth)/change-password'
 import { Route as authedFinanceRouteRouteImport } from './routes/(authed)/finance.route'
 import { Route as authedFinanceDashboardRouteImport } from './routes/(authed)/finance.dashboard'
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const authLoginRoute = authLoginRouteImport.update({
   id: '/(auth)/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const authForgotPasswordRoute = authForgotPasswordRouteImport.update({
+  id: '/(auth)/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authChangePasswordRoute = authChangePasswordRouteImport.update({
@@ -50,6 +56,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/finance': typeof authedFinanceRouteRouteWithChildren
   '/change-password': typeof authChangePasswordRoute
+  '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
 }
@@ -57,6 +64,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/finance': typeof authedFinanceRouteRouteWithChildren
   '/change-password': typeof authChangePasswordRoute
+  '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
 }
@@ -66,6 +74,7 @@ export interface FileRoutesById {
   '/(authed)': typeof authedRouteRouteWithChildren
   '/(authed)/finance': typeof authedFinanceRouteRouteWithChildren
   '/(auth)/change-password': typeof authChangePasswordRoute
+  '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/login': typeof authLoginRoute
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
 }
@@ -75,16 +84,24 @@ export interface FileRouteTypes {
     | '/'
     | '/finance'
     | '/change-password'
+    | '/forgot-password'
     | '/login'
     | '/finance/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/finance' | '/change-password' | '/login' | '/finance/dashboard'
+  to:
+    | '/'
+    | '/finance'
+    | '/change-password'
+    | '/forgot-password'
+    | '/login'
+    | '/finance/dashboard'
   id:
     | '__root__'
     | '/'
     | '/(authed)'
     | '/(authed)/finance'
     | '/(auth)/change-password'
+    | '/(auth)/forgot-password'
     | '/(auth)/login'
     | '/(authed)/finance/dashboard'
   fileRoutesById: FileRoutesById
@@ -93,6 +110,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   authedRouteRoute: typeof authedRouteRouteWithChildren
   authChangePasswordRoute: typeof authChangePasswordRoute
+  authForgotPasswordRoute: typeof authForgotPasswordRoute
   authLoginRoute: typeof authLoginRoute
 }
 
@@ -117,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(auth)/forgot-password': {
+      id: '/(auth)/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof authForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/change-password': {
@@ -170,6 +195,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   authedRouteRoute: authedRouteRouteWithChildren,
   authChangePasswordRoute: authChangePasswordRoute,
+  authForgotPasswordRoute: authForgotPasswordRoute,
   authLoginRoute: authLoginRoute,
 }
 export const routeTree = rootRouteImport

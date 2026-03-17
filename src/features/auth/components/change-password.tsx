@@ -22,6 +22,7 @@ import { Authed } from "./authed";
 
 export function ChangePassword() {
 	const { challenge } = getRouteApi("/(auth)/change-password").useLoaderData();
+	const isForgotPassword = challenge.reason === "forgot_password";
 	const action = useServerFn(changePasswordFn);
 	const resendCode = useServerFn(resendPasswordResetCodeFn);
 	const navigate = useNavigate({ from: "/change-password" });
@@ -86,7 +87,11 @@ export function ChangePassword() {
 	return (
 		<Authed
 			title="Change Password"
-			description="Verify the SMS code on file before setting your permanent password."
+			description={
+				isForgotPassword
+					? "Verify the SMS code on file to reset your password."
+					: "Verify the SMS code on file before setting your permanent password."
+			}
 		>
 			<form
 				onSubmit={(e) => {
@@ -105,8 +110,9 @@ export function ChangePassword() {
 									Code sent to {challenge.maskedPhone}
 								</p>
 								<FieldDescription className="text-xs">
-									Enter the 6-digit code from SMS. The current code expires in
-									10 minutes.
+									{isForgotPassword
+										? "Enter the 6-digit code from SMS to continue resetting your password."
+										: "Enter the 6-digit code from SMS before you continue with your first password change."}
 								</FieldDescription>
 							</div>
 						</div>

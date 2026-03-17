@@ -3,7 +3,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "#/db";
 import { users } from "#/db/schema";
-import { changePasswordFormSchema, loginFormSchema } from "#/features/auth/services/schema";
+import {
+	changePasswordFormSchema,
+	forgotPasswordFormSchema,
+	loginFormSchema,
+} from "#/features/auth/services/schema";
 import {
 	buildPasswordResetSmsMessage,
 	generatePasswordResetCode,
@@ -11,6 +15,8 @@ import {
 	getSecondsUntil,
 	hashPassword,
 	hashPasswordResetCode,
+	LOGIN_LOCKOUT_MINUTES,
+	LOGIN_MAX_ATTEMPTS,
 	maskPhoneNumber,
 	normalizePhoneNumber,
 	PASSWORD_RESET_CODE_TTL_MINUTES,
@@ -35,6 +41,36 @@ type PasswordResetChallengeUser = Pick<
 	| "passwordResetCodeSentAt"
 	| "passwordResetLockedUntil"
 >;
+
+type LoginChallengeUser = Pick<
+	typeof users.$inferSelect,
+	"id" | "loginAttemptCount" | "loginLockedUntil"
+>;
+
+async function findUserByUsernameAndCongregation(
+	username: string,
+	congregationId: number,
+) {
+	let user = await db.query.users.findFirst({
+		where: and(
+			eq(sql`trim(lower(${users.userId}))`, username.trim().toLowerCase()),
+			eq(users.congregationId, congregationId),
+		),
+	});
+
+	if (!user) {
+		const superAdminUser = await db.query.users.findFirst({
+			where: and(
+				eq(sql`trim(lower(${users.userId}))`, username.trim().toLowerCase()),
+				eq(users.userType, "super admin"),
+			),
+		});
+
+		user = superAdminUser ?? undefined;
+	}
+
+	return user;
+}
 
 async function getPasswordResetUserOrRedirect() {
 	// biome-ignore lint/correctness/useHookAtTopLevel: <not your ordinary hook>
@@ -91,9 +127,9 @@ async function issuePasswordResetCode(
 
 	const resendAvailableAt = user.passwordResetCodeSentAt
 		? new Date(
-			user.passwordResetCodeSentAt.getTime()
-			+ PASSWORD_RESET_RESEND_COOLDOWN_SECONDS * 1000,
-		)
+				user.passwordResetCodeSentAt.getTime() +
+					PASSWORD_RESET_RESEND_COOLDOWN_SECONDS * 1000,
+			)
 		: null;
 
 	if (forceResend && resendAvailableAt && resendAvailableAt > now) {
@@ -104,10 +140,10 @@ async function issuePasswordResetCode(
 	}
 
 	if (
-		!forceResend
-		&& user.passwordResetCodeHash
-		&& user.passwordResetCodeExpiresAt
-		&& user.passwordResetCodeExpiresAt > now
+		!forceResend &&
+		user.passwordResetCodeHash &&
+		user.passwordResetCodeExpiresAt &&
+		user.passwordResetCodeExpiresAt > now
 	) {
 		return success({
 			maskedPhone: maskPhoneNumber(user.contact),
@@ -140,7 +176,8 @@ async function issuePasswordResetCode(
 		});
 	} catch {
 		return failure({
-			message: "Unable to send the verification SMS right now. Please try again.",
+			message:
+				"Unable to send the verification SMS right now. Please try again.",
 			type: "ApplicationError",
 		});
 	}
@@ -151,30 +188,48 @@ async function issuePasswordResetCode(
 	});
 }
 
+async function registerFailedLoginAttempt(user: LoginChallengeUser) {
+	const now = new Date();
+	const nextAttemptCount =
+		user.loginLockedUntil && user.loginLockedUntil <= now
+			? 1
+			: user.loginAttemptCount + 1;
+	const shouldLockAccount = nextAttemptCount >= LOGIN_MAX_ATTEMPTS;
+
+	await db
+		.update(users)
+		.set({
+			loginAttemptCount: shouldLockAccount ? 0 : nextAttemptCount,
+			loginLockedUntil: shouldLockAccount
+				? new Date(now.getTime() + LOGIN_LOCKOUT_MINUTES * 60 * 1000)
+				: null,
+		})
+		.where(eq(users.id, user.id));
+
+	return shouldLockAccount;
+}
+
 export const loginFn = createServerFn({ method: "POST" })
 	.inputValidator(loginFormSchema)
 	.handler(async ({ data }) => {
-
 		const congregationId = Number(data.congregationId);
-		let user = await db.query.users.findFirst({
-			where: and(
-				eq(sql`trim(lower(${users.userId}))`, data.username),
-				eq(users.congregationId, congregationId),
-			),
-		});
-		if (!user) {
-			const superAdminUser = await db.query.users.findFirst({
-				where: and(
-					eq(sql`trim(lower(${users.userId}))`, data.username),
-					eq(users.userType, "super admin")
-				),
-			});
-			user = superAdminUser ?? undefined;
-		}
+		const user = await findUserByUsernameAndCongregation(
+			data.username,
+			congregationId,
+		);
 
 		if (!user || !user.active) {
 			return failure({
 				message: "Invalid username or password",
+				type: "AuthenticationError",
+			});
+		}
+
+		const now = new Date();
+
+		if (user.loginLockedUntil && user.loginLockedUntil > now) {
+			return failure({
+				message: `Too many login attempts. Try again in ${getMinutesUntil(user.loginLockedUntil)} minute(s).`,
 				type: "AuthenticationError",
 			});
 		}
@@ -187,6 +242,7 @@ export const loginFn = createServerFn({ method: "POST" })
 			await session.update({
 				mustChangePassword: true,
 				passwordResetUserId: user.id,
+				passwordResetReason: "first_login",
 			});
 
 			const issuedCode = await issuePasswordResetCode(user);
@@ -202,69 +258,130 @@ export const loginFn = createServerFn({ method: "POST" })
 		const passwordMatches = await verifyPassword(data.password, user.password);
 
 		if (!passwordMatches) {
+			const shouldLockAccount = await registerFailedLoginAttempt(user);
+
 			return failure({
-				message: "Invalid username or password",
+				message: shouldLockAccount
+					? `Too many login attempts. Try again in ${LOGIN_LOCKOUT_MINUTES} minute(s).`
+					: "Invalid username or password",
 				type: "AuthenticationError",
 			});
 		}
 
-		await session.update({
-			id: user.id,
-			congregationId: user.congregationId,
-			userName: user.userName,
-			userType: user.userType,
-		});
+		// Rollback reference:
+		// await session.update({
+		// 	id: user.id,
+		// 	congregationId: user.congregationId,
+		// 	userName: user.userName,
+		// 	userType: user.userType,
+		// });
+		await session.update(
+			{
+				id: user.id,
+				congregationId: user.congregationId,
+				userName: user.userName,
+				userType: user.userType,
+			},
+			{ rememberMe: data.rememberMe, type: "auth", userId: user.id },
+		);
 
 		await db
 			.update(users)
-			.set({ lastLogin: new Date() })
+			.set({
+				lastLogin: new Date(),
+				loginAttemptCount: 0,
+				loginLockedUntil: null,
+			})
 			.where(eq(users.id, user.id));
 
 		return success(undefined);
 	});
 
-export const getPasswordResetChallengeFn = createServerFn({ method: "GET" }).handler(
-	async () => {
-		const { user } = await getPasswordResetUserOrRedirect();
+export const requestPasswordResetFn = createServerFn({ method: "POST" })
+	.inputValidator(forgotPasswordFormSchema)
+	.handler(async ({ data }) => {
+		const congregationId = Number(data.congregationId);
+		const user = await findUserByUsernameAndCongregation(
+			data.username,
+			congregationId,
+		);
 
-		if (!user.contact) {
-			throw redirect({ to: "/login" });
+		if (!user || !user.active || !user.contact) {
+			return success({
+				message:
+					"If the account can be reset, an SMS verification code will be sent to the registered phone number.",
+			});
 		}
 
-		const resendAvailableAt = user.passwordResetCodeSentAt
-			? new Date(
-				user.passwordResetCodeSentAt.getTime()
-				+ PASSWORD_RESET_RESEND_COOLDOWN_SECONDS * 1000,
-			)
-			: null;
+		// biome-ignore lint/correctness/useHookAtTopLevel: <not your ordinary hook>
+		const session = await useAppSession();
+		await session.clear();
+		await session.update({
+			mustChangePassword: true,
+			passwordResetUserId: user.id,
+			passwordResetReason: "forgot_password",
+		});
 
-		return {
-			maskedPhone: maskPhoneNumber(user.contact),
-			expiresAt: user.passwordResetCodeExpiresAt?.toISOString() ?? null,
-			resendAvailableAt: resendAvailableAt?.toISOString() ?? null,
-		};
-	},
-);
-
-export const resendPasswordResetCodeFn = createServerFn({ method: "POST" }).handler(
-	async () => {
-		const { user } = await getPasswordResetUserOrRedirect();
-		const issuedCode = await issuePasswordResetCode(user, { forceResend: true });
+		const issuedCode = await issuePasswordResetCode(user);
 
 		if (!issuedCode.success) {
-			return issuedCode;
+			await session.clear();
+
+			if (issuedCode.error.type === "ApplicationError") {
+				return issuedCode;
+			}
+
+			return success({
+				message:
+					"If the account can be reset, an SMS verification code will be sent to the registered phone number.",
+			});
 		}
 
-		return success({
-			maskedPhone: issuedCode.data.maskedPhone,
-		});
-	},
-);
+		throw redirect({ to: "/change-password" });
+	});
+
+export const getPasswordResetChallengeFn = createServerFn({
+	method: "GET",
+}).handler(async () => {
+	const { session, user } = await getPasswordResetUserOrRedirect();
+
+	if (!user.contact) {
+		throw redirect({ to: "/login" });
+	}
+
+	const resendAvailableAt = user.passwordResetCodeSentAt
+		? new Date(
+				user.passwordResetCodeSentAt.getTime() +
+					PASSWORD_RESET_RESEND_COOLDOWN_SECONDS * 1000,
+			)
+		: null;
+
+	return {
+		reason: session.data.passwordResetReason ?? "forgot_password",
+		maskedPhone: maskPhoneNumber(user.contact),
+		expiresAt: user.passwordResetCodeExpiresAt?.toISOString() ?? null,
+		resendAvailableAt: resendAvailableAt?.toISOString() ?? null,
+	};
+});
+
+export const resendPasswordResetCodeFn = createServerFn({
+	method: "POST",
+}).handler(async () => {
+	const { user } = await getPasswordResetUserOrRedirect();
+	const issuedCode = await issuePasswordResetCode(user, { forceResend: true });
+
+	if (!issuedCode.success) {
+		return issuedCode;
+	}
+
+	return success({
+		maskedPhone: issuedCode.data.maskedPhone,
+	});
+});
 
 export const changePasswordFn = createServerFn({ method: "POST" })
 	.inputValidator(changePasswordFormSchema)
 	.handler(async ({ data }) => {
-
 		const { session, user } = await getPasswordResetUserOrRedirect();
 		const now = new Date();
 
@@ -276,12 +393,13 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 		}
 
 		if (
-			!user.passwordResetCodeHash
-			|| !user.passwordResetCodeExpiresAt
-			|| user.passwordResetCodeExpiresAt <= now
+			!user.passwordResetCodeHash ||
+			!user.passwordResetCodeExpiresAt ||
+			user.passwordResetCodeExpiresAt <= now
 		) {
 			return failure({
-				message: "Your verification code has expired. Request a new code and try again.",
+				message:
+					"Your verification code has expired. Request a new code and try again.",
 				type: "AuthenticationError",
 			});
 		}
@@ -298,8 +416,8 @@ export const changePasswordFn = createServerFn({ method: "POST" })
 					passwordResetAttemptCount: nextAttemptCount,
 					passwordResetLockedUntil: shouldLockAccount
 						? new Date(
-							now.getTime() + PASSWORD_RESET_LOCKOUT_MINUTES * 60 * 1000,
-						)
+								now.getTime() + PASSWORD_RESET_LOCKOUT_MINUTES * 60 * 1000,
+							)
 						: null,
 				})
 				.where(eq(users.id, user.id));
@@ -347,7 +465,7 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(
 			return null;
 		}
 
-		return await db.query.users.findFirst({
+		const user = await db.query.users.findFirst({
 			columns: {
 				id: true,
 				userId: true,
@@ -357,5 +475,12 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(
 			},
 			where: eq(users.id, userId),
 		});
+
+		if (!user) {
+			await session.clear();
+			return null;
+		}
+
+		return user;
 	},
 );

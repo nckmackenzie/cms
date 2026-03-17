@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { LogInIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ export function LoginPage() {
 			username: "",
 			password: "",
 			congregationId: "",
+			rememberMe: false,
 		},
 		validators: {
 			onSubmit: loginFormSchema,
@@ -81,6 +82,20 @@ export function LoginPage() {
 						<field.PasswordTextField label="Password" placeholder="******" />
 					)}
 				</form.AppField>
+				<form.AppField name="rememberMe">
+					{(field) => (
+						<field.FormCheckbox
+							label="Remember me"
+							helperText="Keep me signed in for 30 days on this device."
+						/>
+					)}
+				</form.AppField>
+				<Link
+					to="/forgot-password"
+					className="text-sm text-primary hover:underline block text-right mb-4"
+				>
+					Forgot Password?
+				</Link>
 				<form.AppForm>
 					<form.SubmitButton
 						icon={<LogInIcon />}
