@@ -4,6 +4,7 @@ import {
 	date,
 	index,
 	integer,
+	jsonb,
 	pgEnum,
 	pgTable,
 	serial,
@@ -23,8 +24,10 @@ export const ACCOUNT_TYPES = [
 ] as const;
 export const accountTypeEnum = pgEnum("account_type_enum", ACCOUNT_TYPES);
 export const NORMAL_BALANCES = ["debit", "credit"] as const;
-export type DebitCredit = typeof NORMAL_BALANCES[number];
+export type DebitCredit = (typeof NORMAL_BALANCES)[number];
 export const normalBalanceEnum = pgEnum("normal_balance_enum", NORMAL_BALANCES);
+export const SESSION_TYPES = ["auth", "password_reset"] as const;
+export const sessionTypeEnum = pgEnum("session_type_enum", SESSION_TYPES);
 
 export const congregations = pgTable(
 	"congregations",
@@ -96,8 +99,9 @@ export const ledgerAccounts = pgTable(
 		normalBalance: normalBalanceEnum("normal_balance").notNull(),
 		isEditable: boolean("is_editable").notNull().default(true),
 		active: boolean("active").notNull().default(true),
-		congregationId: integer("congregation_id")
-			.references(() => congregations.id),
+		congregationId: integer("congregation_id").references(
+			() => congregations.id,
+		),
 		deletedAt: timestamp("deleted_at"),
 	},
 	(table) => [
@@ -130,6 +134,8 @@ export const users = pgTable(
 		roleId: integer("role_id").references(() => roles.id),
 		transferId: integer("transfer_id"),
 		lastLogin: timestamp("last_login"),
+		loginAttemptCount: integer("login_attempt_count").notNull().default(0),
+		loginLockedUntil: timestamp("login_locked_until"),
 		passwordResetCodeHash: varchar("password_reset_code_hash", { length: 255 }),
 		passwordResetCodeExpiresAt: timestamp("password_reset_code_expires_at"),
 		passwordResetCodeSentAt: timestamp("password_reset_code_sent_at"),
@@ -147,6 +153,29 @@ export const users = pgTable(
 		index("users_district_id_idx").on(table.districtId),
 		index("users_congregation_id_idx").on(table.congregationId),
 		index("users_role_id_idx").on(table.roleId),
+	],
+);
+
+export const sessions = pgTable(
+	"sessions",
+	{
+		id: serial("id").primaryKey(),
+		userId: integer("user_id").references(() => users.id),
+		type: sessionTypeEnum("type").notNull(),
+		tokenHash: varchar("token_hash", { length: 255 }),
+		expiresAt: timestamp("expires_at").notNull(),
+		lastAccessedAt: timestamp("last_accessed_at"),
+		rememberMe: boolean("remember_me").notNull().default(false),
+		ipAddress: varchar("ip_address", { length: 255 }),
+		userAgent: varchar("user_agent", { length: 512 }),
+		data: jsonb("data").$type<Record<string, unknown>>().notNull(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("sessions_token_hash_unique").on(table.tokenHash),
+		index("sessions_user_id_idx").on(table.userId),
+		index("sessions_expires_at_idx").on(table.expiresAt),
 	],
 );
 
@@ -186,7 +215,7 @@ export const ledgerAccountsRelations = relations(
 	}),
 );
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
 	congregation: one(congregations, {
 		fields: [users.congregationId],
 		references: [congregations.id],
@@ -198,5 +227,13 @@ export const usersRelations = relations(users, ({ one }) => ({
 	role: one(roles, {
 		fields: [users.roleId],
 		references: [roles.id],
+	}),
+	sessions: many(sessions),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id],
 	}),
 }));

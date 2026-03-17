@@ -64,6 +64,20 @@
       "when": 1773428170743,
       "tag": "0008_natural_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773661802492,
+      "tag": "0009_typical_rictor",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773727610551,
+      "tag": "0010_exotic_wiccan",
+      "breakpoints": true
     }
   ]
 }
