@@ -44,7 +44,7 @@ export function DatePicker({
 	className,
 	disabled,
 }: DateRangePickerProps) {
-	const today = new Date();
+	const today = useMemo(() => new Date(), []);
 	const presets = useMemo(
 		() => [
 			{ label: "Today", range: { from: today, to: today } },
