@@ -9,7 +9,7 @@ import {
 	subMonths,
 } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -45,24 +45,30 @@ export function DatePicker({
 	disabled,
 }: DateRangePickerProps) {
 	const today = new Date();
-	const presets = [
-		{ label: "Today", range: { from: today, to: today } },
-		{
-			label: "Yesterday",
-			range: { from: subDays(today, 1), to: subDays(today, 1) },
-		},
-		{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
-		{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
-		{ label: "Month to date", range: { from: startOfMonth(today), to: today } },
-		{
-			label: "Last month",
-			range: {
-				from: startOfMonth(subMonths(today, 1)),
-				to: endOfMonth(subMonths(today, 1)),
+	const presets = useMemo(
+		() => [
+			{ label: "Today", range: { from: today, to: today } },
+			{
+				label: "Yesterday",
+				range: { from: subDays(today, 1), to: subDays(today, 1) },
 			},
-		},
-		{ label: "Year to date", range: { from: startOfYear(today), to: today } },
-	];
+			{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
+			{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
+			{
+				label: "Month to date",
+				range: { from: startOfMonth(today), to: today },
+			},
+			{
+				label: "Last month",
+				range: {
+					from: startOfMonth(subMonths(today, 1)),
+					to: endOfMonth(subMonths(today, 1)),
+				},
+			},
+			{ label: "Year to date", range: { from: startOfYear(today), to: today } },
+		],
+		[today],
+	);
 
 	const [month, setMonth] = useState(today);
 	const defaultPreset = presets[2];
@@ -118,9 +124,7 @@ export function DatePicker({
 				),
 		);
 		setSelectedPreset(matchedPreset?.label || null);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [date, presets.find]);
-
+	}, [date, presets]);
 	return (
 		<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
 			<PopoverTrigger asChild>
@@ -206,7 +210,7 @@ export function DatePicker({
 										>
 											{preset.label}
 										</Button>
-									))}
+									))}{" "}
 								</div>
 							</div>
 						)}

@@ -94,7 +94,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: ListTreeIcon,
 				label: "Chart Of Accounts",
-				href: "/",
+				href: "/finance/chart-of-accounts",
 				activeOptions: { exact: false },
 			},
 			{

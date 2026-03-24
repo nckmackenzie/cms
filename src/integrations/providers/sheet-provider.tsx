@@ -13,7 +13,7 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 
-interface SheetOptions {
+export interface SheetOptions {
 	side?: "top" | "right" | "bottom" | "left";
 	className?: string;
 	onOpenChange?: (open: boolean) => void;
@@ -91,8 +91,7 @@ export const SheetProvider = ({ children }: SheetProviderProps) => {
 
 export const useSheet = () => {
 	const context = useContext(SheetContext);
-	if (!context === undefined)
-		throw new Error("useSheet used outside its provider.");
+	if (!context) throw new Error("useSheet used outside its provider.");
 
 	return context;
 };
