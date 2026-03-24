@@ -303,16 +303,13 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 		<>
 			<Keyframes />
 
-			<div className="flex items-center justify-center min-h-96 p-6 animate-in fade-in duration-300">
+			<div className="flex items-center justify-center  p-6 animate-in fade-in duration-300">
 				<div
 					className={`
-            w-full max-w-md rounded-xl border shadow-md overflow-hidden
+            w-full max-w-md rounded-xl border border-border shadow-md overflow-hidden
             ${variant.wrapClass}
           `}
 				>
-					{/* Accent bar */}
-					<div className={`h-0.75 ${variant.accentClass}`} />
-
 					<div className="p-8">
 						{/* Icon */}
 						<div
@@ -349,13 +346,13 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 						)}
 
 						{/* Actions */}
-						<div className="flex flex-wrap gap-2">
+						<div className="grid md:grid-cols-2 gap-2">
 							{reset && (
 								<button
 									onClick={reset}
 									type="button"
 									className="
-                    inline-flex items-center gap-1.5 text-sm font-medium
+                    inline-flex justify-center items-center gap-1.5 text-sm font-medium
                     px-4 py-2 rounded-md border-[1.5px]
                     bg-primary text-primary-foreground border-primary
                     hover:brightness-90 hover:-translate-y-px
@@ -370,7 +367,7 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 								onClick={() => router.history.back()}
 								type="button"
 								className="
-                  inline-flex items-center gap-1.5 text-sm font-medium
+                  inline-flex justify-center items-center gap-1.5 text-sm font-medium
                   px-4 py-2 rounded-md border-[1.5px]
                   bg-transparent text-muted-foreground border-border
                   hover:bg-muted hover:text-foreground hover:border-border/80
@@ -380,21 +377,6 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 							>
 								<ArrowLeft size={14} strokeWidth={2} />
 								Go back
-							</button>
-							<button
-								onClick={() => router.navigate({ to: "/" })}
-								type="button"
-								className="
-                  inline-flex items-center gap-1.5 text-sm font-medium
-                  px-4 py-2 rounded-md border-[1.5px]
-                  bg-transparent text-muted-foreground border-border
-                  hover:bg-muted hover:text-foreground hover:border-border/80
-                  hover:-translate-y-px active:translate-y-0
-                  transition-all duration-150 cursor-pointer
-                "
-							>
-								<Home size={14} strokeWidth={2} />
-								Dashboard
 							</button>
 						</div>
 					</div>
