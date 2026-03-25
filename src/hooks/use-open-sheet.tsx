@@ -1,4 +1,4 @@
-import { type Route, useNavigate } from "@tanstack/react-router";
+import { type ToOptions, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect } from "react";
 import {
 	type SheetOptions,
@@ -18,7 +18,7 @@ type SheetConfig<TSearch> = {
 };
 
 type UseOpenSheetProps<TSearch> = {
-	from: Route["path"];
+	from: ToOptions["from"];
 	search: TSearch & {
 		sheet?: SheetMode;
 	};
@@ -68,6 +68,7 @@ export function useOpenSheet<TSearch>({
 			onOpenChange: (open) => {
 				if (!open) closeSheet();
 			},
+			className: config.options?.className || "max-w-2xl!",
 		});
 
 		return () => {

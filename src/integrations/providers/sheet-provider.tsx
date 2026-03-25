@@ -82,7 +82,7 @@ export const SheetProvider = ({ children }: SheetProviderProps) => {
 							)}
 						</SheetHeader>
 					)}
-					{showingSheet}
+					<div className="px-4">{showingSheet}</div>
 				</SheetContent>
 			</Sheet>
 		</SheetContext.Provider>
