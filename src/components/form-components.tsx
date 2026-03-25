@@ -1,5 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button, type buttonVariants } from "#/components/ui/button";
 import { ComboBox } from "#/components/ui/custom-select";
@@ -36,6 +36,7 @@ type SubmitButtonProps = {
 	onReset?: () => void;
 	buttonSize?: VariantProps<typeof buttonVariants>["size"];
 	icon?: React.ReactNode;
+	cancelIcon?: React.ReactNode;
 	fieldClassName?: string;
 	cancelButtonText?: string;
 	children?: React.ReactNode;
@@ -54,6 +55,7 @@ export function SubmitButton({
 	buttonSize,
 	icon,
 	fieldClassName,
+	cancelIcon,
 }: SubmitButtonProps) {
 	const form = useFormContext();
 	const isMobile = useIsMobile();
@@ -84,8 +86,10 @@ export function SubmitButton({
 							type="button"
 							disabled={isSubmitting}
 							variant="outline"
+							size={buttonSize ?? "xl"}
 							onClick={onReset ? () => onReset() : () => form.reset()}
 						>
+							{cancelIcon || <XIcon />}
 							{cancelButtonText || "Cancel"}
 						</Button>
 					)}
