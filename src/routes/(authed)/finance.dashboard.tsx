@@ -23,7 +23,7 @@ function RouteComponent() {
 					})
 				}
 			>
-				Finance Dashboard
+				Edit Expense
 			</Button>
 		</div>
 	);

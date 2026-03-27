@@ -16,6 +16,7 @@ import { Route as authForgotPasswordRouteImport } from './routes/(auth)/forgot-p
 import { Route as authChangePasswordRouteImport } from './routes/(auth)/change-password'
 import { Route as authedFinanceRouteRouteImport } from './routes/(authed)/finance.route'
 import { Route as authedFinanceDashboardRouteImport } from './routes/(authed)/finance.dashboard'
+import { Route as authedFinanceChartOfAccountsRouteImport } from './routes/(authed)/finance.chart-of-accounts'
 
 const authedRouteRoute = authedRouteRouteImport.update({
   id: '/(authed)',
@@ -51,6 +52,12 @@ const authedFinanceDashboardRoute = authedFinanceDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => authedFinanceRouteRoute,
 } as any)
+const authedFinanceChartOfAccountsRoute =
+  authedFinanceChartOfAccountsRouteImport.update({
+    id: '/chart-of-accounts',
+    path: '/chart-of-accounts',
+    getParentRoute: () => authedFinanceRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof authChangePasswordRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
+  '/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof authChangePasswordRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
+  '/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
 }
 export interface FileRoutesById {
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/(auth)/change-password': typeof authChangePasswordRoute
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/login': typeof authLoginRoute
+  '/(authed)/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/forgot-password'
     | '/login'
+    | '/finance/chart-of-accounts'
     | '/finance/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/forgot-password'
     | '/login'
+    | '/finance/chart-of-accounts'
     | '/finance/dashboard'
   id:
     | '__root__'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/(auth)/change-password'
     | '/(auth)/forgot-password'
     | '/(auth)/login'
+    | '/(authed)/finance/chart-of-accounts'
     | '/(authed)/finance/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -165,14 +178,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceDashboardRouteImport
       parentRoute: typeof authedFinanceRouteRoute
     }
+    '/(authed)/finance/chart-of-accounts': {
+      id: '/(authed)/finance/chart-of-accounts'
+      path: '/chart-of-accounts'
+      fullPath: '/finance/chart-of-accounts'
+      preLoaderRoute: typeof authedFinanceChartOfAccountsRouteImport
+      parentRoute: typeof authedFinanceRouteRoute
+    }
   }
 }
 
 interface authedFinanceRouteRouteChildren {
+  authedFinanceChartOfAccountsRoute: typeof authedFinanceChartOfAccountsRoute
   authedFinanceDashboardRoute: typeof authedFinanceDashboardRoute
 }
 
 const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
+  authedFinanceChartOfAccountsRoute: authedFinanceChartOfAccountsRoute,
   authedFinanceDashboardRoute: authedFinanceDashboardRoute,
 }
 
