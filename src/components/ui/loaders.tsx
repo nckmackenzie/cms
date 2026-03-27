@@ -20,9 +20,8 @@ export function TableSkeleton({
 	animate,
 }: TableSkeletonProps) {
 	const widths = colWidths ?? Array.from({ length: cols }, () => 1);
-	const total = widths.reduce((a, b) => a + b, 0);
+	const total = widths.reduce((a, b) => a + b, 0) || 1;
 	const pcts = widths.map((w) => `${Math.round((w / total) * 100)}%`);
-
 	return (
 		<div
 			className={cn(
@@ -56,7 +55,7 @@ export function TableSkeleton({
 						display: "grid",
 						gridTemplateColumns: pcts.join(" "),
 						gap: "1rem",
-						opacity: 1 - rowIdx * 0.1,
+						opacity: Math.max(0.2, 1 - rowIdx * 0.1),
 					}}
 				>
 					{pcts.map((_, colIdx) => (

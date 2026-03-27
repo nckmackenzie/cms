@@ -26,14 +26,21 @@ const SWEEP_KEYFRAMES = `
   }
 `;
 
-let injected = false;
 function InjectKeyframes() {
-	if (injected) return null;
-	injected = true;
-	// biome-ignore lint/security/noDangerouslySetInnerHtml: <>
-	return <style dangerouslySetInnerHTML={{ __html: SWEEP_KEYFRAMES }} />;
+	if (
+		typeof document !== "undefined" &&
+		document.getElementById("skeleton-sweep-styles")
+	) {
+		return null;
+	}
+	return (
+		<style
+			id="skeleton-sweep-styles"
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: <>
+			dangerouslySetInnerHTML={{ __html: SWEEP_KEYFRAMES }}
+		/>
+	);
 }
-
 /* ─── Base primitive ─────────────────────────────────────────────── */
 interface SkeletonBaseProps extends React.HTMLAttributes<HTMLOutputElement> {
 	animate?: boolean;

@@ -34,13 +34,13 @@ export function useOpenSheet<TSearch>({
 	const { setOpen, setClose } = useSheet();
 
 	const closeSheet = useCallback(() => {
-		// navigate({ search: {} });
-		navigate({
-			search: (prev) => {
-				const { sheet, ...rest } = prev as TSearch & { sheet?: SheetMode };
-				return rest;
-			},
-		});
+		navigate({ search: {} });
+		// navigate({
+		// 	search: (prev) => {
+		// 		const { sheet, ...rest } = prev as TSearch & { sheet?: SheetMode };
+		// 		return rest;
+		// 	},
+		// });
 	}, [navigate]);
 
 	useEffect(() => {
