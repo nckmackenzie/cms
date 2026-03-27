@@ -1,0 +1,47 @@
+import { useDelete } from "#/hooks/use-delete";
+import type { Result } from "#/lib/result";
+import { ActionButton } from "@/components/ui/action-button";
+import { DeleteAction } from "@/components/ui/custom-button";
+import { cn } from "@/lib/utils";
+
+type DeleteActionButtonProps = {
+	resourceId: string;
+	deleteAction: (params: { data: string }) => Promise<Result<undefined>>;
+	queryKey: string[];
+	successMessage?: string;
+	fallbackMessage?: string;
+	className?: string;
+	children?: React.ReactNode;
+};
+
+export function DeleteActionButton({
+	resourceId,
+	deleteAction,
+	queryKey,
+	fallbackMessage,
+	className,
+	children,
+}: DeleteActionButtonProps) {
+	const deleteHandler = useDelete();
+
+	const handleDelete = async () => {
+		return await deleteHandler(resourceId, deleteAction, {
+			queryKey,
+			fallbackMessage,
+		});
+	};
+
+	return (
+		<ActionButton
+			variant="ghost"
+			action={handleDelete}
+			requireAreYouSure
+			className={cn(
+				"px-1.5 py-1.5 justify-start h-auto w-full flex transition-colors hover:bg-destructive/20! focus:outline-0",
+				className,
+			)}
+		>
+			{children ?? <DeleteAction />}
+		</ActionButton>
+	);
+}
