@@ -78,6 +78,48 @@
       "when": 1773727610551,
       "tag": "0010_exotic_wiccan",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1774605268563,
+      "tag": "0011_mean_lightspeed",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1774611780990,
+      "tag": "0012_plain_gorilla_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1774614466889,
+      "tag": "0013_watery_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1774632462935,
+      "tag": "0014_calm_hellion",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1774632693372,
+      "tag": "0015_icy_steel_serpent",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1774636166902,
+      "tag": "0016_sad_toad",
+      "breakpoints": true
     }
   ]
 }

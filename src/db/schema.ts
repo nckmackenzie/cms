@@ -1,17 +1,21 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
+	check,
 	date,
 	index,
 	integer,
 	jsonb,
+	numeric,
 	pgEnum,
 	pgTable,
 	serial,
+	text,
 	timestamp,
 	uniqueIndex,
 	varchar,
 } from "drizzle-orm/pg-core";
+import { createdAt, id } from "#/db/helpers";
 
 export const USER_TYPES = ["super admin", "admin", "standard user"] as const;
 export const userTypeEnum = pgEnum("user_type_enum", USER_TYPES);
@@ -22,12 +26,30 @@ export const ACCOUNT_TYPES = [
 	"income",
 	"expense",
 ] as const;
+export const PAYMENT_METHODS = ["cash", "mpesa", "bank", "cheque"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export const paymentMethodEnum = pgEnum("payment_method_enum", PAYMENT_METHODS);
+
+export const CONTRIBUTION_CATEGORIES = [
+	"member",
+	"group",
+	"district",
+	"service",
+	"congregation",
+] as const;
+export type ContributionCategory = (typeof CONTRIBUTION_CATEGORIES)[number];
+export const contributionCategoryEnum = pgEnum(
+	"contribution_category_enum",
+	CONTRIBUTION_CATEGORIES,
+);
+
 export const accountTypeEnum = pgEnum("account_type_enum", ACCOUNT_TYPES);
 export const NORMAL_BALANCES = ["debit", "credit"] as const;
 export type DebitCredit = (typeof NORMAL_BALANCES)[number];
 export const normalBalanceEnum = pgEnum("normal_balance_enum", NORMAL_BALANCES);
 export const SESSION_TYPES = ["auth", "password_reset"] as const;
 export const sessionTypeEnum = pgEnum("session_type_enum", SESSION_TYPES);
+export const lineDcEnum = pgEnum("line_dc", NORMAL_BALANCES);
 
 export const congregations = pgTable(
 	"congregations",
@@ -84,6 +106,26 @@ export const districts = pgTable(
 	],
 );
 
+export const groups = pgTable(
+	"groups",
+	{
+		id,
+		groupName: text("group_name").notNull(),
+		active: boolean("active").notNull().default(true),
+		deletedAt: timestamp("deleted_at"),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+	},
+	(table) => [
+		index("groups_congregation_id_idx").on(table.congregationId),
+		uniqueIndex("groups_congregation_id_group_name_unique").on(
+			table.congregationId,
+			table.groupName,
+		),
+	],
+);
+
 export const ledgerAccounts = pgTable(
 	"ledger_accounts",
 	{
@@ -114,6 +156,147 @@ export const ledgerAccounts = pgTable(
 			table.congregationId,
 			table.accountNo,
 		),
+	],
+);
+
+export const services = pgTable(
+	"services",
+	{
+		id,
+		name: varchar("name").notNull(),
+		serviceTime: varchar("service_time").notNull(),
+		active: boolean("active").notNull().default(true),
+		deletedAt: timestamp("deleted_at"),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+	},
+	(table) => [
+		index("services_congregation_id_idx").on(table.congregationId),
+		uniqueIndex("services_congregation_id_service_name_unique").on(
+			table.congregationId,
+			table.name,
+		),
+	],
+);
+
+export const subAccounts = pgTable(
+	"sub_accounts",
+	{
+		id,
+		name: varchar("name").notNull(),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		accountId: integer("account_id").references(() => ledgerAccounts.id),
+		groupId: varchar("group_id").references(() => groups.id),
+		districtId: integer("district_id").references(() => districts.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [uniqueIndex("subaccounts_name_unique").on(table.name)],
+);
+
+export const receiptHeader = pgTable(
+	"receipt_header",
+	{
+		id,
+		receiptNo: varchar("receipt_no", { length: 15 }),
+		contributionDate: date("contribution_date").notNull(),
+		postedBy: integer("posted_by")
+			.notNull()
+			.references(() => users.id),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		createdAt,
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("receipt_header_posted_by_idx").on(table.postedBy),
+		index("receipt_header_congregation_id_idx").on(table.congregationId),
+		index("receipt_header_receipt_no_idx").on(table.receiptNo),
+		index("receipt_header_contribution_date_idx").on(table.contributionDate),
+	],
+);
+
+export const receiptDetails = pgTable(
+	"receipt_details",
+	{
+		id: serial("id").primaryKey(),
+		headerId: varchar("header_id")
+			.notNull()
+			.references(() => receiptHeader.id),
+		contributionAccountId: integer("contribution_account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		paymentMethod: paymentMethodEnum("payment_method").notNull(),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+		category: contributionCategoryEnum("category").notNull(),
+		contributorMemberId: varchar("contributor_member_id"),
+		contributorGroupId: varchar("contributor_group_id").references(
+			() => groups.id,
+		),
+		contributorDistrictId: integer("contributor_district_id").references(
+			() => districts.id,
+		),
+		contributorServiceId: varchar("contributor_service_id").references(
+			() => services.id,
+		),
+		contributorCongregationId: integer(
+			"contributor_congregation_id",
+		).references(() => congregations.id),
+		paymentReference: varchar("payment_reference", { length: 255 }),
+		narration: varchar("narration", { length: 50 }),
+		incomeType: integer("income_type").notNull(),
+		forGroup: boolean("for_group").notNull().default(false),
+		subaccountId: varchar("sub_account_id").references(() => subAccounts.id),
+	},
+	(table) => [
+		check(
+			"receipt_details_one_contributor_check",
+			sql`(
+				(CASE WHEN ${table.contributorMemberId} IS NOT NULL THEN 1 ELSE 0 END) +
+				(CASE WHEN ${table.contributorGroupId} IS NOT NULL THEN 1 ELSE 0 END) +
+				(CASE WHEN ${table.contributorDistrictId} IS NOT NULL THEN 1 ELSE 0 END) +
+				(CASE WHEN ${table.contributorServiceId} IS NOT NULL THEN 1 ELSE 0 END) +
+				(CASE WHEN ${table.contributorCongregationId} IS NOT NULL THEN 1 ELSE 0 END)
+			) = 1`,
+		),
+		index("receipt_details_header_id_idx").on(table.headerId),
+		index("receipt_details_contribution_account_id_idx").on(
+			table.contributionAccountId,
+		),
+		index("receipt_details_bank_id_idx").on(table.bankId),
+	],
+);
+
+export const journalEntries = pgTable(
+	"journal_entries",
+	{
+		id,
+		transactionDate: date("transaction_date").notNull(),
+		lineNumber: integer("line_number").notNull(),
+		accountId: integer("account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		dc: lineDcEnum("dc").notNull(), // 'DEBIT' or 'CREDIT'
+		amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+		memo: text("memo"),
+		reference: varchar("reference", { length: 255 }),
+		source: varchar("source", { length: 255 }),
+		sourceId: varchar("source_id", { length: 255 }),
+		journalNo: integer("journal_no"),
+		congregationId: integer("congregation_id").references(
+			() => congregations.id,
+		),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("journal_entries_transaction_date_idx").on(table.transactionDate),
+		index("journal_entries_account_id_idx").on(table.accountId),
+		index("journal_entries_congregation_id_idx").on(table.congregationId),
+		index("journal_entries_journal_no_idx").on(table.journalNo),
+		index("journal_entries_line_number_idx").on(table.lineNumber),
+		index("journal_entries_reference_idx").on(table.reference),
 	],
 );
 
@@ -181,7 +364,10 @@ export const sessions = pgTable(
 
 export const congregationsRelations = relations(congregations, ({ many }) => ({
 	districts: many(districts),
+	groups: many(groups),
 	ledgerAccounts: many(ledgerAccounts),
+	receiptHeaders: many(receiptHeader),
+	services: many(services),
 	users: many(users),
 }));
 
@@ -194,7 +380,16 @@ export const districtsRelations = relations(districts, ({ one, many }) => ({
 		fields: [districts.congregationId],
 		references: [congregations.id],
 	}),
+	subAccounts: many(subAccounts),
 	users: many(users),
+}));
+
+export const groupsRelations = relations(groups, ({ one, many }) => ({
+	congregation: one(congregations, {
+		fields: [groups.congregationId],
+		references: [congregations.id],
+	}),
+	subAccounts: many(subAccounts),
 }));
 
 export const ledgerAccountsRelations = relations(
@@ -212,8 +407,84 @@ export const ledgerAccountsRelations = relations(
 		children: many(ledgerAccounts, {
 			relationName: "ledger_account_parent_child",
 		}),
+		journalEntries: many(journalEntries),
+		receiptContributionTypes: many(receiptDetails, {
+			relationName: "receipt_contribution_type",
+		}),
+		receiptBanks: many(receiptDetails, {
+			relationName: "receipt_bank",
+		}),
+		subAccountsBank: many(subAccounts, {
+			relationName: "sub_accounts_bank",
+		}),
+		subAccountsAccount: many(subAccounts, {
+			relationName: "sub_accounts_account",
+		}),
 	}),
 );
+
+export const receiptHeaderRelations = relations(
+	receiptHeader,
+	({ one, many }) => ({
+		postedBy: one(users, {
+			fields: [receiptHeader.postedBy],
+			references: [users.id],
+		}),
+		congregation: one(congregations, {
+			fields: [receiptHeader.congregationId],
+			references: [congregations.id],
+		}),
+		details: many(receiptDetails),
+	}),
+);
+
+export const receiptDetailsRelations = relations(receiptDetails, ({ one }) => ({
+	header: one(receiptHeader, {
+		fields: [receiptDetails.headerId],
+		references: [receiptHeader.id],
+	}),
+	contributionType: one(ledgerAccounts, {
+		fields: [receiptDetails.contributionAccountId],
+		references: [ledgerAccounts.id],
+		relationName: "receipt_contribution_type",
+	}),
+	bank: one(ledgerAccounts, {
+		fields: [receiptDetails.bankId],
+		references: [ledgerAccounts.id],
+		relationName: "receipt_bank",
+	}),
+	contributorGroup: one(groups, {
+		fields: [receiptDetails.contributorGroupId],
+		references: [groups.id],
+	}),
+	contributorDistrict: one(districts, {
+		fields: [receiptDetails.contributorDistrictId],
+		references: [districts.id],
+	}),
+	contributorService: one(services, {
+		fields: [receiptDetails.contributorServiceId],
+		references: [services.id],
+	}),
+	contributorCong: one(congregations, {
+		fields: [receiptDetails.contributorCongregationId],
+		references: [congregations.id],
+	}),
+	subaccount: one(subAccounts, {
+		fields: [receiptDetails.subaccountId],
+		references: [subAccounts.id],
+	}),
+}));
+
+export const journalEntriesRelations = relations(journalEntries, ({ one }) => ({
+	account: one(ledgerAccounts, {
+		fields: [journalEntries.accountId],
+		references: [ledgerAccounts.id],
+	}),
+	congregation: one(congregations, {
+		fields: [journalEntries.congregationId],
+		references: [congregations.id],
+	}),
+}));
 
 export const usersRelations = relations(users, ({ one, many }) => ({
 	congregation: one(congregations, {
@@ -228,6 +499,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 		fields: [users.roleId],
 		references: [roles.id],
 	}),
+	receiptHeaders: many(receiptHeader),
 	sessions: many(sessions),
 }));
 
@@ -235,5 +507,34 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 	user: one(users, {
 		fields: [sessions.userId],
 		references: [users.id],
+	}),
+}));
+
+export const servicesRelations = relations(services, ({ one, many }) => ({
+	congregation: one(congregations, {
+		fields: [services.congregationId],
+		references: [congregations.id],
+	}),
+	receiptDetails: many(receiptDetails),
+}));
+
+export const subAccountsRelations = relations(subAccounts, ({ one }) => ({
+	bank: one(ledgerAccounts, {
+		fields: [subAccounts.bankId],
+		references: [ledgerAccounts.id],
+		relationName: "sub_accounts_bank",
+	}),
+	account: one(ledgerAccounts, {
+		fields: [subAccounts.accountId],
+		references: [ledgerAccounts.id],
+		relationName: "sub_accounts_account",
+	}),
+	group: one(groups, {
+		fields: [subAccounts.groupId],
+		references: [groups.id],
+	}),
+	district: one(districts, {
+		fields: [subAccounts.districtId],
+		references: [districts.id],
 	}),
 }));
