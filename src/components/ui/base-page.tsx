@@ -86,7 +86,21 @@ export function BasePageComponent({
 }: PropsWithChildren<Props>) {
 	return (
 		<div className={cn("y-spacing", className)}>
-			<PageHeader title={pageTitle} description={pageDescription} />
+			<PageHeader
+				title={pageTitle}
+				description={pageDescription}
+				content={
+					<div className="flex flex-col sm:flex-row sm:items-center gap-2">
+						{hasNewButton && (
+							<Button variant="default" onClick={newButtonAction} size="xl">
+								{buttonIcon ?? <PlusIcon />}
+								{buttonText}
+							</Button>
+						)}
+						{extraActionButtons}
+					</div>
+				}
+			/>
 			<div
 				className={cn(
 					"flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:items-center md:justify-between",
@@ -101,7 +115,7 @@ export function BasePageComponent({
 						className="bg-card"
 					/>
 				)}
-				<div className="flex flex-col sm:flex-row sm:items-center gap-2">
+				{/* <div className="flex flex-col sm:flex-row sm:items-center gap-2">
 					{hasNewButton && (
 						<Button variant="default" onClick={newButtonAction} size="xl">
 							{buttonIcon ?? <PlusIcon />}
@@ -109,7 +123,7 @@ export function BasePageComponent({
 						</Button>
 					)}
 					{extraActionButtons}
-				</div>
+				</div> */}
 			</div>
 			{customFilters}
 			<Suspense>
