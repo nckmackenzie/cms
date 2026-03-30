@@ -1,5 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
-import { CheckIcon, XIcon } from "lucide-react";
+import {SaveIcon, XIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button, type buttonVariants } from "#/components/ui/button";
 import { ComboBox } from "#/components/ui/custom-select";
@@ -77,7 +77,7 @@ export function SubmitButton({
 							isLoading={isSubmitting || !!isLoading}
 							className="flex gap-2 items-center"
 						>
-							{icon || <CheckIcon />}
+							{icon || <SaveIcon />}
 							{buttonText}
 						</LoadingSwap>
 					</Button>
