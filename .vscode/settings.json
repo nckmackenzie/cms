@@ -1,9 +1,17 @@
 {
   "files.watcherExclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/.output/**": true,
+    "**/.tanstack/**": true,
+    "**/.content-collections/**": true,
+    "**/src/db/migrations/**": true
   },
   "search.exclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/.output/**": true,
+    "**/.tanstack/**": true,
+    "**/.content-collections/**": true,
+    "**/src/db/migrations/**": true
   },
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
@@ -15,7 +23,7 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "biomejs.biome"
