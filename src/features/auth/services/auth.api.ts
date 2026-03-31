@@ -275,10 +275,11 @@ export const loginFn = createServerFn({ method: "POST" })
 		// 	userName: user.userName,
 		// 	userType: user.userType,
 		// });
+		console.log({ selectedCongregationId: congregationId });
 		await session.update(
 			{
 				id: user.id,
-				congregationId: user.congregationId,
+				congregationId,
 				userName: user.userName,
 				userType: user.userType,
 			},
@@ -481,6 +482,9 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(
 			return null;
 		}
 
-		return user;
+		return {
+			...user,
+			congregationId: session.data.congregationId as number,
+		};
 	},
 );
