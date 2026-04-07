@@ -8,6 +8,10 @@ type VatType = 'none' | 'inclusive' | 'exclusive';
 type DateRangeString = { from: string; to: string };
 type DateRangeDate = { from: Date; to: Date };
 
+export interface OnSuccess {
+  onSuccess: () => void;
+}
+
 export const currencyFormatter = (
   value: string | number,
   isCurrency = true,
