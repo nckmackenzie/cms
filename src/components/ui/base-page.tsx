@@ -175,7 +175,7 @@ export function Wrapper({ children, size = "md", className }: WrapperProps) {
 	return (
 		<div
 			className={cn(
-				"p-4 md:px-6 bg-popover mx-auto rounded-md md:shadow-sm space-y-6 w-full",
+				"p-4 md:px-6 mx-auto space-y-6 w-full",
 				{
 					"max-w-xl": size === "xs",
 					"max-w-3xl": size === "sm",
