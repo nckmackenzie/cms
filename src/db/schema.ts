@@ -9,13 +9,13 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	uniqueIndex,
+	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
-import { createdAt, id } from "#/db/helpers";
+import { createdAt } from "#/db/helpers";
 
 export const USER_TYPES = ["super admin", "admin", "standard user"] as const;
 export const userTypeEnum = pgEnum("user_type_enum", USER_TYPES);
@@ -54,7 +54,8 @@ export const lineDcEnum = pgEnum("line_dc", NORMAL_BALANCES);
 export const congregations = pgTable(
 	"congregations",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		parishName: varchar("parish_name", { length: 255 }),
 		congregationName: varchar("congregation_name", { length: 255 }).notNull(),
 		contact: varchar("contact", { length: 15 }),
@@ -79,7 +80,7 @@ export const congregations = pgTable(
 export const roles = pgTable(
 	"roles",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
 		roleName: varchar("role_name", { length: 100 }).notNull(),
 		deletedAt: timestamp("deleted_at"),
 	},
@@ -89,7 +90,8 @@ export const roles = pgTable(
 export const districts = pgTable(
 	"districts",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		districtName: varchar("district_name", { length: 255 }).notNull(),
 		deletedAt: timestamp("deleted_at"),
 		congregationId: integer("congregation_id")
@@ -109,7 +111,8 @@ export const districts = pgTable(
 export const groups = pgTable(
 	"groups",
 	{
-		id,
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		groupName: text("group_name").notNull(),
 		active: boolean("active").notNull().default(true),
 		deletedAt: timestamp("deleted_at"),
@@ -129,7 +132,8 @@ export const groups = pgTable(
 export const ledgerAccounts = pgTable(
 	"ledger_accounts",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		name: varchar("name", { length: 255 }).notNull(),
 		accountType: accountTypeEnum("account_type").notNull(),
 		parentId: integer("parent_id"),
@@ -162,7 +166,8 @@ export const ledgerAccounts = pgTable(
 export const services = pgTable(
 	"services",
 	{
-		id,
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		name: varchar("name").notNull(),
 		serviceTime: varchar("service_time").notNull(),
 		active: boolean("active").notNull().default(true),
@@ -183,22 +188,41 @@ export const services = pgTable(
 export const subAccounts = pgTable(
 	"sub_accounts",
 	{
-		id,
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		name: varchar("name").notNull(),
 		bankId: integer("bank_id").references(() => ledgerAccounts.id),
 		accountId: integer("account_id").references(() => ledgerAccounts.id),
-		groupId: varchar("group_id").references(() => groups.id),
+		groupId: integer("group_id").references(() => groups.id),
 		districtId: integer("district_id").references(() => districts.id),
 		deletedAt: timestamp("deleted_at"),
 	},
 	(table) => [uniqueIndex("subaccounts_name_unique").on(table.name)],
 );
 
+export const fiscalYears = pgTable(
+	"fiscal_years",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		yearName: text("year_name").notNull(),
+		startDate: date("start_date").notNull(),
+		endDate: date("end_date").notNull(),
+		closed: boolean("closed").notNull().default(false),
+		createdDate: date("created_date").notNull(),
+		closedDate: date("closed_date"),
+		prefixReferences: boolean("prefix_references").notNull().default(false),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [index("fiscal_years_year_name_idx").on(table.yearName)],
+);
+
 export const receiptHeader = pgTable(
 	"receipt_header",
 	{
-		id,
-		receiptNo: varchar("receipt_no", { length: 15 }),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		receiptNo: varchar("receipt_no", { length: 15 }).notNull(),
 		contributionDate: date("contribution_date").notNull(),
 		postedBy: integer("posted_by")
 			.notNull()
@@ -220,8 +244,8 @@ export const receiptHeader = pgTable(
 export const receiptDetails = pgTable(
 	"receipt_details",
 	{
-		id: serial("id").primaryKey(),
-		headerId: varchar("header_id")
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		headerId: integer("header_id")
 			.notNull()
 			.references(() => receiptHeader.id),
 		contributionAccountId: integer("contribution_account_id")
@@ -231,14 +255,14 @@ export const receiptDetails = pgTable(
 		bankId: integer("bank_id").references(() => ledgerAccounts.id),
 		amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
 		category: contributionCategoryEnum("category").notNull(),
-		contributorMemberId: varchar("contributor_member_id"),
-		contributorGroupId: varchar("contributor_group_id").references(
+		contributorMemberId: integer("contributor_member_id"),
+		contributorGroupId: integer("contributor_group_id").references(
 			() => groups.id,
 		),
 		contributorDistrictId: integer("contributor_district_id").references(
 			() => districts.id,
 		),
-		contributorServiceId: varchar("contributor_service_id").references(
+		contributorServiceId: integer("contributor_service_id").references(
 			() => services.id,
 		),
 		contributorCongregationId: integer(
@@ -246,9 +270,9 @@ export const receiptDetails = pgTable(
 		).references(() => congregations.id),
 		paymentReference: varchar("payment_reference", { length: 255 }),
 		narration: varchar("narration", { length: 50 }),
-		incomeType: integer("income_type").notNull(),
+		incomeType: integer("income_type").notNull().default(1),
 		forGroup: boolean("for_group").notNull().default(false),
-		subaccountId: varchar("sub_account_id").references(() => subAccounts.id),
+		subaccountId: integer("sub_account_id").references(() => subAccounts.id),
 	},
 	(table) => [
 		check(
@@ -272,7 +296,8 @@ export const receiptDetails = pgTable(
 export const journalEntries = pgTable(
 	"journal_entries",
 	{
-		id,
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		transactionDate: date("transaction_date").notNull(),
 		lineNumber: integer("line_number").notNull(),
 		accountId: integer("account_id")
@@ -303,7 +328,8 @@ export const journalEntries = pgTable(
 export const users = pgTable(
 	"users",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
 		userId: varchar("user_id", { length: 100 }).notNull(),
 		userName: varchar("user_name", { length: 255 }).notNull(),
 		userType: userTypeEnum("user_type").notNull().default("standard user"),
@@ -342,7 +368,7 @@ export const users = pgTable(
 export const sessions = pgTable(
 	"sessions",
 	{
-		id: serial("id").primaryKey(),
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
 		userId: integer("user_id").references(() => users.id),
 		type: sessionTypeEnum("type").notNull(),
 		tokenHash: varchar("token_hash", { length: 255 }),
@@ -499,6 +525,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 		fields: [users.roleId],
 		references: [roles.id],
 	}),
+	fiscalYearsCreated: many(fiscalYears),
 	receiptHeaders: many(receiptHeader),
 	sessions: many(sessions),
 }));
