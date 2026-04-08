@@ -212,6 +212,7 @@ type SelectProps = {
 	placeholder?: string;
 	className?: string;
 	disabled?: boolean;
+	isNumber?: boolean;
 } & ComponentProps<typeof ShadcnSelect.Select> &
 	UniversalFieldProps;
 
@@ -223,16 +224,17 @@ export function Select({
 	helperText,
 	className,
 	disabled,
+	isNumber,
 }: SelectProps) {
-	const field = useFieldContext<string>();
+	const field = useFieldContext<string | number | null | undefined>();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
 			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
 			<ShadcnSelect.Select
-				onValueChange={(e) => field.handleChange(e)}
-				value={field.state.value}
+				onValueChange={(e) => field.handleChange(isNumber ? Number(e) : e)}
+				value={field.state.value?.toString() || ""}
 			>
 				<ShadcnSelect.SelectTrigger
 					aria-invalid={isInvalid}
