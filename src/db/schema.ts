@@ -51,6 +51,20 @@ export const SESSION_TYPES = ["auth", "password_reset"] as const;
 export const sessionTypeEnum = pgEnum("session_type_enum", SESSION_TYPES);
 export const lineDcEnum = pgEnum("line_dc", NORMAL_BALANCES);
 
+export const BANK_TRANSACTION_METHODS = [
+	"deposit",
+	"withdrawal",
+	"charges",
+	"b/f",
+	"transfers",
+	"inter-transfer(sub accounts)",
+] as const;
+export type BankTransactionMethod = (typeof BANK_TRANSACTION_METHODS)[number];
+export const bankTransactionMethodEnum = pgEnum(
+	"bank_transaction_method_enum",
+	BANK_TRANSACTION_METHODS,
+);
+
 export const congregations = pgTable(
 	"congregations",
 	{
@@ -365,6 +379,41 @@ export const users = pgTable(
 	],
 );
 
+export const bankPostings = pgTable(
+	"bank_postings",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		transactionDate: date("transaction_date").notNull(),
+		bankId: integer("bank_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		dc: lineDcEnum("dc").notNull(),
+		amount: numeric("amount").notNull(),
+		transactionMethod:
+			bankTransactionMethodEnum("transaction_method").notNull(),
+		reference: varchar("reference", { length: 255 }).notNull(),
+		counterAccountId: integer("counter_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		cleared: boolean("cleared").default(false),
+		clearedAt: date("cleared_at"),
+		narration: varchar("narration", { length: 255 }),
+		source: varchar("source_type", { length: 50 }),
+		sourceId: varchar("source_id", { length: 50 }),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(table) => [
+		index("bank_postings_bank_id_idx").on(table.bankId),
+		index("bank_postings_transaction_date_idx").on(table.transactionDate),
+		index("bank_postings_reference_idx").on(table.reference),
+	],
+);
+
 export const sessions = pgTable(
 	"sessions",
 	{
@@ -525,7 +574,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 		fields: [users.roleId],
 		references: [roles.id],
 	}),
-	fiscalYearsCreated: many(fiscalYears),
 	receiptHeaders: many(receiptHeader),
 	sessions: many(sessions),
 }));

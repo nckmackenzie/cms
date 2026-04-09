@@ -1,0 +1,2 @@
+CREATE TYPE "public"."bank_transaction_method_enum" AS ENUM('deposit', 'withdrawal', 'charges', 'b/f', 'transfers', 'inter-transfer(sub accounts)');--> statement-breakpoint
+ALTER TABLE "bank_postings" ADD COLUMN "transaction_method" "bank_transaction_method_enum" NOT NULL;
