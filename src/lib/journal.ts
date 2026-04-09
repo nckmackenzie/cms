@@ -134,7 +134,11 @@ export const getCashEquivalentAccountId = async ({
 }: CashEquivalentAccountIdParams) => {
 	let creditingAccountId: number;
 
-	if (paymentMethod === "bank" || paymentMethod === "cheque") {
+	if (
+		paymentMethod === "bank" ||
+		paymentMethod === "cheque" ||
+		paymentMethod === "mpesa"
+	) {
 		if (!bankId) {
 			throw new Error("Bank is required for this payment method");
 		}
