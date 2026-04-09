@@ -20,6 +20,20 @@ import {
 	WalletIcon,
 } from "lucide-react";
 
+export const SOURCES = [
+	"Receipts",
+	"Expenses",
+	"Petty Cash",
+	"Group Fund Approval",
+	"Bank Transactions",
+	"Payments",
+	"Journal Entries",
+	"Deposits",
+	"Group Collections",
+] as const;
+
+export type Source = (typeof SOURCES)[number];
+
 // type Route = keyof FileRoutesByPath;
 export type Route = Pick<LinkOptions, "activeOptions" | "to">;
 
@@ -100,7 +114,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: HandCoinsIcon,
 				label: "Reciepts",
-				href: "/",
+				href: "/finance/receipts",
 				activeOptions: { exact: false },
 			},
 			{
