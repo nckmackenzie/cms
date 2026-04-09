@@ -18,7 +18,7 @@ export const Route = createFileRoute(
 		return { receipt };
 	},
 	staticData: {
-		breadcrumb: (p) => `Edit Receipt# ${p.loaderData.receipt.receiptNo}`,
+		breadcrumb: (p) => `Edit Receipt #${p.loaderData.receipt.receiptNo}`,
 	},
 });
 

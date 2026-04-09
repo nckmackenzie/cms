@@ -27,7 +27,10 @@ export function defaultNormalBalanceForType(
 	}
 }
 
-const createAccount = async (data: z.infer<typeof accountsFormSchema>) => {
+const createAccount = async (
+	data: z.infer<typeof accountsFormSchema>,
+	congregationId: number,
+) => {
 	const accountId = await db.transaction(async (tx) => {
 		const [{ id }] = await tx
 			.insert(ledgerAccounts)
@@ -41,6 +44,7 @@ const createAccount = async (data: z.infer<typeof accountsFormSchema>) => {
 				isPosting: data.isSubcategory,
 				accountNo: data.isBankAccount ? data.accountNumber : null,
 				isBank: data.isBankAccount,
+				congregationId,
 			})
 			.returning({ id: ledgerAccounts.id });
 
@@ -97,27 +101,41 @@ const createAccount = async (data: z.infer<typeof accountsFormSchema>) => {
 export const getAccounts = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.inputValidator(coaValidateSearch)
-	.handler(async ({ data: { search } }) => {
-		return db
-			.select()
-			.from(ledgerAccounts)
-			.where(
-				search
-					? or(
-							ilike(ledgerAccounts.name, `%${search}%`),
-							ilike(ledgerAccounts.description, `%${search}%`),
-							ilike(
-								sql`cast(${ledgerAccounts.accountType} as text)`,
-								`%${search}%`,
-							),
-						)
-					: undefined,
-			)
-			.orderBy(asc(ledgerAccounts.accountType), asc(ledgerAccounts.name))
-			.then((data) =>
-				data.map((d) => ({ ...d, name: toTitleCase(d.name.toLowerCase()) })),
-			);
-	});
+	.handler(
+		async ({
+			data: { search },
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			return db
+				.select()
+				.from(ledgerAccounts)
+				.where(
+					and(
+						search
+							? or(
+									ilike(ledgerAccounts.name, `%${search}%`),
+									ilike(ledgerAccounts.description, `%${search}%`),
+									ilike(
+										sql`cast(${ledgerAccounts.accountType} as text)`,
+										`%${search}%`,
+									),
+								)
+							: undefined,
+						or(
+							eq(ledgerAccounts.congregationId, congregationId),
+							isNull(ledgerAccounts.congregationId),
+						),
+						isNull(ledgerAccounts.deletedAt),
+					),
+				)
+				.orderBy(asc(ledgerAccounts.accountType), asc(ledgerAccounts.name))
+				.then((data) =>
+					data.map((d) => ({ ...d, name: toTitleCase(d.name.toLowerCase()) })),
+				);
+		},
+	);
 
 export const getBankAccounts = createServerFn()
 	.middleware([authMiddleware])
@@ -151,54 +169,61 @@ export const getBankAccounts = createServerFn()
 export const upsertAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator(accountsFormSchema)
-	.handler(async ({ data }) => {
-		if (data.id) {
-			const accountId = Number(data.id);
-			if (Number.isNaN(accountId)) {
-				return failure({
-					type: "ValidationError",
-					message: "Invalid account id",
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			if (data.id) {
+				const accountId = Number(data.id);
+				if (Number.isNaN(accountId)) {
+					return failure({
+						type: "ValidationError",
+						message: "Invalid account id",
+					});
+				}
+
+				const account = await db.query.ledgerAccounts.findFirst({
+					columns: { id: true },
+					where: eq(ledgerAccounts.id, accountId),
 				});
+				if (!account) {
+					return failure({
+						type: "NotFoundError",
+						message: "Account not found",
+					});
+				}
+
+				const parentId = data.isSubcategory ? Number(data.parentId) : null;
+				if (parentId === accountId) {
+					return failure({
+						type: "ValidationError",
+						message: "Account cannot be its own parent",
+					});
+				}
+
+				await db
+					.update(ledgerAccounts)
+					.set({
+						name: toTitleCase(data.name),
+						accountType: data.accountType,
+						normalBalance: defaultNormalBalanceForType(data.accountType),
+						parentId,
+						active: data.isActive,
+						description: data.description,
+						isPosting: data.isSubcategory,
+						accountNo: data.isBankAccount ? data.accountNumber : null,
+						isBank: data.isBankAccount,
+					})
+					.where(eq(ledgerAccounts.id, accountId));
+
+				return success(accountId);
 			}
-
-			const account = await db.query.ledgerAccounts.findFirst({
-				columns: { id: true },
-				where: eq(ledgerAccounts.id, accountId),
-			});
-			if (!account) {
-				return failure({
-					type: "NotFoundError",
-					message: "Account not found",
-				});
-			}
-
-			const parentId = data.isSubcategory ? Number(data.parentId) : null;
-			if (parentId === accountId) {
-				return failure({
-					type: "ValidationError",
-					message: "Account cannot be its own parent",
-				});
-			}
-
-			await db
-				.update(ledgerAccounts)
-				.set({
-					name: toTitleCase(data.name),
-					accountType: data.accountType,
-					normalBalance: defaultNormalBalanceForType(data.accountType),
-					parentId,
-					active: data.isActive,
-					description: data.description,
-					isPosting: data.isSubcategory,
-					accountNo: data.isBankAccount ? data.accountNumber : null,
-					isBank: data.isBankAccount,
-				})
-				.where(eq(ledgerAccounts.id, accountId));
-
-			return success(accountId);
-		}
-		return await createAccount(data);
-	});
+			return await createAccount(data, congregationId);
+		},
+	);
 
 export const deleteAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])

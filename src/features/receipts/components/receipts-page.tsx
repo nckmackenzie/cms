@@ -56,10 +56,13 @@ function CustomFilters({
 				onReset={() => setFilters({ dateRange: undefined })}
 				onDateChange={(value) =>
 					setFilters({
-						dateRange: {
-							from: value.from ? dateFormat(value.from) : undefined,
-							to: value.to ? dateFormat(value.to) : undefined,
-						},
+						dateRange:
+							value.from && value.to
+								? {
+										from: dateFormat(value.from),
+										to: dateFormat(value.to),
+									}
+								: undefined,
 					})
 				}
 				className="bg-card"

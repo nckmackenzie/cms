@@ -45,15 +45,10 @@ export const receiptsFormSchema = z
 					id: z.string(),
 					accountId: z.number().min(1, "Account is required"),
 					category: z.enum(CONTRIBUTION_CATEGORIES),
-					contributorMemberId: z.number().nullish(),
 					contributorGroupId: z.number().nullish(),
 					contributorDistrictId: z.number().nullish(),
-					contributorCongregationId: z.number().nullish(),
 					contributorServiceId: z.number().nullish(),
-					amount: z
-						.number()
-						.min(1, "Amount is required")
-						.positive({ error: "Amount must be a positive number" }),
+					amount: z.number().min(1, "Amount is required"),
 					narration: z.string().optional(),
 				})
 				.superRefine((data, ctx) => {
@@ -64,28 +59,11 @@ export const receiptsFormSchema = z
 							path: ["contributorGroupId"],
 						});
 					}
-					if (data.category === "member" && !data.contributorMemberId) {
-						ctx.addIssue({
-							code: "custom",
-							message: "Member is required",
-							path: ["contributorMemberId"],
-						});
-					}
 					if (data.category === "district" && !data.contributorDistrictId) {
 						ctx.addIssue({
 							code: "custom",
 							message: "District is required",
 							path: ["contributorDistrictId"],
-						});
-					}
-					if (
-						data.category === "congregation" &&
-						!data.contributorCongregationId
-					) {
-						ctx.addIssue({
-							code: "custom",
-							message: "Congregation is required",
-							path: ["contributorCongregationId"],
 						});
 					}
 					if (data.category === "service" && !data.contributorServiceId) {

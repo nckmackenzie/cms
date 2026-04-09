@@ -115,15 +115,6 @@ export function BasePageComponent({
 						className="bg-card"
 					/>
 				)}
-				{/* <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-					{hasNewButton && (
-						<Button variant="default" onClick={newButtonAction} size="xl">
-							{buttonIcon ?? <PlusIcon />}
-							{buttonText}
-						</Button>
-					)}
-					{extraActionButtons}
-				</div> */}
 			</div>
 			{customFilters}
 			<Suspense>

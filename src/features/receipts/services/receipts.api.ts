@@ -57,6 +57,7 @@ const buildReceiptJournalLines = async (
 	journalLines.push({
 		accountId: await getCashEquivalentAccountId({
 			paymentMethod: data.paymentMethod,
+			congregationId,
 			bankId: data.bankId ?? undefined,
 		}),
 		amount: totalAmount.toString(),
@@ -101,8 +102,8 @@ const createReceipt = async (
 					amount: detail.amount.toString(),
 					paymentMethod: data.paymentMethod,
 					bankId: data.bankId,
-					contributorMemberId:
-						detail.category === "member" ? detail.contributorMemberId : null,
+					// contributorMemberId:
+					// 	detail.category === "member" ? detail.contributorMemberId : null,
 					contributorGroupId:
 						detail.category === "group" ? detail.contributorGroupId : null,
 					contributorDistrictId:
@@ -200,8 +201,8 @@ const updateReceipt = async (
 					amount: detail.amount.toString(),
 					paymentMethod: data.paymentMethod,
 					bankId: data.bankId,
-					contributorMemberId:
-						detail.category === "member" ? detail.contributorMemberId : null,
+					// contributorMemberId:
+					// 	detail.category === "member" ? detail.contributorMemberId : null,
 					contributorGroupId:
 						detail.category === "group" ? detail.contributorGroupId : null,
 					contributorDistrictId:
@@ -347,7 +348,11 @@ export const getReceipts = createServerFn()
 					eq(receiptHeader.id, receiptDetails.headerId),
 				)
 				.where(
-					and(eq(receiptHeader.congregationId, congregationId), ...filters),
+					and(
+						eq(receiptHeader.congregationId, congregationId),
+						isNull(receiptHeader.deletedAt),
+						...filters,
+					),
 				)
 				.groupBy(
 					receiptHeader.id,

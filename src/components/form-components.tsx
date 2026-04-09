@@ -1,5 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
-import {SaveIcon, XIcon } from "lucide-react";
+import { SaveIcon, XIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button, type buttonVariants } from "#/components/ui/button";
 import { ComboBox } from "#/components/ui/custom-select";
@@ -233,7 +233,9 @@ export function Select({
 		<Field data-invalid={isInvalid} className={fieldClassName}>
 			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
 			<ShadcnSelect.Select
-				onValueChange={(e) => field.handleChange(isNumber ? Number(e) : e)}
+				onValueChange={(e) =>
+					field.handleChange(isNumber ? (e ? Number(e) : null) : e)
+				}
 				value={field.state.value?.toString() || ""}
 			>
 				<ShadcnSelect.SelectTrigger

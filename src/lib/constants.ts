@@ -113,7 +113,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			},
 			{
 				icon: HandCoinsIcon,
-				label: "Reciepts",
+				label: "Receipts",
 				href: "/finance/receipts",
 				activeOptions: { exact: false },
 			},

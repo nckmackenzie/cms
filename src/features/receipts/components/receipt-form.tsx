@@ -34,10 +34,10 @@ import { cn, toTitleCase } from "#/lib/utils";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 
 const CATEGORIES = [
-	{ value: "member", label: "Member" },
+	// { value: "member", label: "Member" },
 	{ value: "group", label: "Group" },
 	{ value: "district", label: "District" },
-	{ value: "congregation", label: "Congregation" },
+	// { value: "congregation", label: "Congregation" },
 	{ value: "service", label: "Service" },
 ];
 
@@ -394,131 +394,71 @@ function Detail({
 		return "—";
 	}, [detail, districts, groups, services]);
 	return (
-		<>
-			<Card size="sm" className="border border-border/80 bg-popover/80">
-				<CardHeader className="pb-0">
-					<div className="flex items-center gap-3">
-						<div className="flex items-center justify-center size-7 rounded-full text-[11px] font-semibold shrink-0 bg-muted text-muted-foreground">
-							{index + 1}
-						</div>
-						<div className="flex min-w-0 flex-1 items-center gap-3 flex-wrap">
-							<CategoryBadge category={detail.category} />
-							<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-								<UserIcon size={12} strokeWidth={2} />
-								{contributor !== "—" ? (
-									contributor?.toUpperCase()
-								) : (
-									<span className="text-muted-foreground/40">
-										No contributor
-									</span>
-								)}
-							</span>
-							<span className="text-sm font-medium text-foreground truncate min-w-[140px]">
-								{accountLabel !== "—" ? (
-									<span className="inline-flex items-center gap-1">
-										<ReceiptIcon size={12} strokeWidth={2} />
-										{accountLabel}
-									</span>
-								) : (
-									<span className="text-muted-foreground/40">No account</span>
-								)}
-							</span>
-						</div>
-						<CardAction>
-							<div className="flex items-center gap-2">
-								<span
-									className={cn(
-										"font-display text-base font-semibold",
-										detail.amount > 0
-											? "text-foreground"
-											: "text-muted-foreground/30",
-									)}
-								>
-									{detail.amount > 0 ? currencyFormatter(detail.amount) : "—"}
-								</span>
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										onRemove(index);
-									}}
-									className="p-1.5 rounded-md text-destructive hover:bg-danger transition-all duration-150"
-								>
-									<Trash2Icon size={13} strokeWidth={2} />
-								</button>
-							</div>
-						</CardAction>
+		<Card size="sm" className="border border-border/80 bg-popover/80">
+			<CardHeader className="pb-0">
+				<div className="flex items-center gap-3">
+					<div className="flex items-center justify-center size-7 rounded-full text-[11px] font-semibold shrink-0 bg-muted text-muted-foreground">
+						{index + 1}
 					</div>
-				</CardHeader>
-				{detail.narration && (
-					<CardContent className="pt-2">
-						<div className="flex items-center gap-1 text-xs text-muted-foreground">
-							<StickyNoteIcon size={12} strokeWidth={2} />
-							<span className="text-muted-foreground/70 line-clamp-1">
-								{detail.narration}
+					<div className="flex min-w-0 flex-1 items-center gap-3 flex-wrap">
+						<CategoryBadge category={detail.category} />
+						<span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+							<UserIcon size={12} strokeWidth={2} />
+							{contributor !== "—" ? (
+								contributor?.toUpperCase()
+							) : (
+								<span className="text-muted-foreground/40">No contributor</span>
+							)}
+						</span>
+						<span className="text-sm font-medium text-foreground truncate min-w-[140px]">
+							{accountLabel !== "—" ? (
+								<span className="inline-flex items-center gap-1">
+									<ReceiptIcon size={12} strokeWidth={2} />
+									{accountLabel}
+								</span>
+							) : (
+								<span className="text-muted-foreground/40">No account</span>
+							)}
+						</span>
+					</div>
+					<CardAction>
+						<div className="flex items-center gap-2">
+							<span
+								className={cn(
+									"font-display text-base font-semibold",
+									detail.amount > 0
+										? "text-foreground"
+										: "text-muted-foreground/30",
+								)}
+							>
+								{detail.amount > 0 ? currencyFormatter(detail.amount) : "—"}
 							</span>
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									onRemove(index);
+								}}
+								aria-label="Remove receipt line"
+								className="p-1.5 rounded-md text-destructive hover:bg-danger transition-all duration-150"
+							>
+								<Trash2Icon size={13} strokeWidth={2} />
+							</button>
 						</div>
-					</CardContent>
-				)}
-			</Card>
-			{/* Previous layout (kept for quick revert)
-		<div className="relative rounded-xl border border-border transition-all duration-200 bg-popover">
-			<div className="flex items-center gap-3 px-4 py-3 cursor-pointer select-none">
-				<div className="flex items-center justify-center size-6 rounded-full text-[11px] font-bold shrink-0 bg-muted text-muted-foreground">
-					{index + 1}
+					</CardAction>
 				</div>
-				<div className="flex flex-1 items-center gap-3 min-w-0 flex-wrap">
-					<CategoryBadge category={detail.category} />
-					<span className="text-sm font-medium text-foreground truncate min-w-[120px]">
-						{accountLabel !== "—" ? (
-							accountLabel
-						) : (
-							<span className="text-muted-foreground/40">No account</span>
-						)}
-					</span>
-					<span className="text-sm text-muted-foreground truncate min-w-[100px]">
-						{contributor !== "—" ? (
-							contributor?.toUpperCase()
-						) : (
-							<span className="text-muted-foreground/40">No contributor</span>
-						)}
-					</span>
-				</div>
-				<span
-					className={cn(
-						"font-display text-base font-bold shrink-0 ml-auto",
-						detail.amount > 0 ? "text-foreground" : "text-muted-foreground/30",
-					)}
-				>
-					{detail.amount > 0 ? currencyFormatter(detail.amount) : "—"}
-				</span>
-				<div className="flex items-center gap-1 shrink-0 ml-3">
-					<button
-						type="button"
-						onClick={(e) => {
-							e.stopPropagation();
-							onRemove(index);
-						}}
-						className="p-1.5 rounded-md text-destructive hover:bg-danger transition-all duration-150"
-					>
-						<Trash2Icon size={13} strokeWidth={2} />
-					</button>
-				</div>
-			</div>
+			</CardHeader>
 			{detail.narration && (
-				<div className="flex items-start gap-1.5 px-4 pb-2.5 -mt-1">
-					<StickyNoteIcon
-						size={10}
-						className="text-muted-foreground/50 mt-0.5 shrink-0"
-					/>
-					<p className="text-[11px] text-muted-foreground/60 line-clamp-1">
-						{detail.narration}
-					</p>
-				</div>
+				<CardContent className="pt-2">
+					<div className="flex items-center gap-1 text-xs text-muted-foreground">
+						<StickyNoteIcon size={12} strokeWidth={2} />
+						<span className="text-muted-foreground/70 line-clamp-1">
+							{detail.narration}
+						</span>
+					</div>
+				</CardContent>
 			)}
-		</div>
-		*/}
-		</>
+		</Card>
 	);
 }
 

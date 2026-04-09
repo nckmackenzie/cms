@@ -389,7 +389,7 @@ export const bankPostings = pgTable(
 			.notNull()
 			.references(() => ledgerAccounts.id),
 		dc: lineDcEnum("dc").notNull(),
-		amount: numeric("amount").notNull(),
+		amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
 		transactionMethod:
 			bankTransactionMethodEnum("transaction_method").notNull(),
 		reference: varchar("reference", { length: 255 }).notNull(),

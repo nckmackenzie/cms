@@ -1,15 +1,11 @@
 import type { ExtractTablesWithRelations } from "drizzle-orm";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { Source } from "#/lib/constants";
 import { db } from "@/db";
 import type * as schema from "@/db/schema";
 import { journalEntries, ledgerAccounts } from "@/db/schema";
-import {
-	type AccountType,
-	defaultNormalBalanceForType,
-} from "@/features/coa/services/coa.api";
 
 type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -76,35 +72,6 @@ export const deleteJournalEntry = async ({
 		.returning({ id: journalEntries.id });
 };
 
-export const createOrGetAccountId = async (
-	accountName: string,
-	type: AccountType,
-	congregationId?: number,
-	tx?: Transaction,
-) => {
-	const connection = tx ?? db;
-	const account = await connection.query.ledgerAccounts.findFirst({
-		where: eq(sql`lower(${ledgerAccounts.name})`, accountName.toLowerCase()),
-	});
-
-	if (!account) {
-		const [newAccount] = await connection
-			.insert(ledgerAccounts)
-			.values({
-				name: accountName,
-				congregationId: congregationId ?? null,
-				accountType: type,
-				normalBalance: defaultNormalBalanceForType(type),
-				isPosting: true,
-				active: true,
-			})
-			.returning();
-		return newAccount.id;
-	}
-
-	return account.id;
-};
-
 export const areJournalValuesBalanced = (
 	lines: Omit<typeof journalEntries.$inferInsert, "id" | "deletedAt">[],
 ) => {
@@ -125,11 +92,13 @@ export const areJournalValuesBalanced = (
 
 type CashEquivalentAccountIdParams = {
 	paymentMethod: schema.PaymentMethod;
+	congregationId: number;
 	bankId?: number;
 };
 
 export const getCashEquivalentAccountId = async ({
 	paymentMethod,
+	congregationId,
 	bankId,
 }: CashEquivalentAccountIdParams) => {
 	let creditingAccountId: number;
@@ -146,7 +115,14 @@ export const getCashEquivalentAccountId = async ({
 		const result = await db
 			.select({ accountId: ledgerAccounts.id })
 			.from(ledgerAccounts)
-			.where(eq(ledgerAccounts.id, bankId));
+			.where(
+				and(
+					eq(ledgerAccounts.id, bankId),
+					eq(ledgerAccounts.congregationId, congregationId),
+					eq(ledgerAccounts.active, true),
+					isNull(ledgerAccounts.deletedAt),
+				),
+			);
 
 		if (result.length === 0) {
 			throw new Error(`Bank account not found`);
@@ -157,7 +133,10 @@ export const getCashEquivalentAccountId = async ({
 	} else {
 		const result = await db.query.ledgerAccounts.findFirst({
 			columns: { id: true },
-			where: eq(ledgerAccounts.name, "cash at hand"),
+			where: and(
+				eq(ledgerAccounts.name, "cash at hand"),
+				isNull(ledgerAccounts.congregationId),
+			),
 		});
 
 		if (!result) {

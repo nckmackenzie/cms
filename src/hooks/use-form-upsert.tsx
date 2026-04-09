@@ -51,13 +51,6 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 
 			if (!result.success) {
 				onErrorCallback?.(result.error, isEdit);
-				toast.error("Something went wrong", {
-					description: (
-						<p className="text-xs text-muted-foreground">
-							{result.error.message}
-						</p>
-					),
-				});
 				if (result.error.type === "AuthenticationError") {
 					toast.error("Unauthenticated request!", {
 						description: (

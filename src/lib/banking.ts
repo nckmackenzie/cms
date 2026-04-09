@@ -15,7 +15,7 @@ type Transaction = PgTransaction<
 type CreateBankingEntryParams = {
 	entry: Omit<
 		typeof bankPostings.$inferInsert,
-		"id" | "createdAt" | "updatedAt"
+		"id" | "createdAt" | "deletedAt"
 	>;
 	tx?: Transaction;
 };
