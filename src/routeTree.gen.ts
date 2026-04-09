@@ -17,6 +17,10 @@ import { Route as authChangePasswordRouteImport } from './routes/(auth)/change-p
 import { Route as authedFinanceRouteRouteImport } from './routes/(authed)/finance.route'
 import { Route as authedFinanceDashboardRouteImport } from './routes/(authed)/finance.dashboard'
 import { Route as authedFinanceChartOfAccountsRouteImport } from './routes/(authed)/finance.chart-of-accounts'
+import { Route as authedFinanceReceiptsRouteRouteImport } from './routes/(authed)/finance.receipts.route'
+import { Route as authedFinanceReceiptsIndexRouteImport } from './routes/(authed)/finance.receipts.index'
+import { Route as authedFinanceReceiptsNewRouteImport } from './routes/(authed)/finance.receipts.new'
+import { Route as authedFinanceReceiptsReceiptIdEditRouteImport } from './routes/(authed)/finance.receipts.$receiptId.edit'
 
 const authedRouteRoute = authedRouteRouteImport.update({
   id: '/(authed)',
@@ -58,6 +62,30 @@ const authedFinanceChartOfAccountsRoute =
     path: '/chart-of-accounts',
     getParentRoute: () => authedFinanceRouteRoute,
   } as any)
+const authedFinanceReceiptsRouteRoute =
+  authedFinanceReceiptsRouteRouteImport.update({
+    id: '/receipts',
+    path: '/receipts',
+    getParentRoute: () => authedFinanceRouteRoute,
+  } as any)
+const authedFinanceReceiptsIndexRoute =
+  authedFinanceReceiptsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => authedFinanceReceiptsRouteRoute,
+  } as any)
+const authedFinanceReceiptsNewRoute =
+  authedFinanceReceiptsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => authedFinanceReceiptsRouteRoute,
+  } as any)
+const authedFinanceReceiptsReceiptIdEditRoute =
+  authedFinanceReceiptsReceiptIdEditRouteImport.update({
+    id: '/$receiptId/edit',
+    path: '/$receiptId/edit',
+    getParentRoute: () => authedFinanceReceiptsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,8 +93,12 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof authChangePasswordRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
+  '/finance/receipts': typeof authedFinanceReceiptsRouteRouteWithChildren
   '/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
+  '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
+  '/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,6 +108,9 @@ export interface FileRoutesByTo {
   '/login': typeof authLoginRoute
   '/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
+  '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/finance/receipts': typeof authedFinanceReceiptsIndexRoute
+  '/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,8 +120,12 @@ export interface FileRoutesById {
   '/(auth)/change-password': typeof authChangePasswordRoute
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/login': typeof authLoginRoute
+  '/(authed)/finance/receipts': typeof authedFinanceReceiptsRouteRouteWithChildren
   '/(authed)/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
+  '/(authed)/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/(authed)/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
+  '/(authed)/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,8 +135,12 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/forgot-password'
     | '/login'
+    | '/finance/receipts'
     | '/finance/chart-of-accounts'
     | '/finance/dashboard'
+    | '/finance/receipts/new'
+    | '/finance/receipts/'
+    | '/finance/receipts/$receiptId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,6 +150,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/finance/chart-of-accounts'
     | '/finance/dashboard'
+    | '/finance/receipts/new'
+    | '/finance/receipts'
+    | '/finance/receipts/$receiptId/edit'
   id:
     | '__root__'
     | '/'
@@ -115,8 +161,12 @@ export interface FileRouteTypes {
     | '/(auth)/change-password'
     | '/(auth)/forgot-password'
     | '/(auth)/login'
+    | '/(authed)/finance/receipts'
     | '/(authed)/finance/chart-of-accounts'
     | '/(authed)/finance/dashboard'
+    | '/(authed)/finance/receipts/new'
+    | '/(authed)/finance/receipts/'
+    | '/(authed)/finance/receipts/$receiptId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -185,15 +235,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceChartOfAccountsRouteImport
       parentRoute: typeof authedFinanceRouteRoute
     }
+    '/(authed)/finance/receipts': {
+      id: '/(authed)/finance/receipts'
+      path: '/receipts'
+      fullPath: '/finance/receipts'
+      preLoaderRoute: typeof authedFinanceReceiptsRouteRouteImport
+      parentRoute: typeof authedFinanceRouteRoute
+    }
+    '/(authed)/finance/receipts/': {
+      id: '/(authed)/finance/receipts/'
+      path: '/'
+      fullPath: '/finance/receipts/'
+      preLoaderRoute: typeof authedFinanceReceiptsIndexRouteImport
+      parentRoute: typeof authedFinanceReceiptsRouteRoute
+    }
+    '/(authed)/finance/receipts/new': {
+      id: '/(authed)/finance/receipts/new'
+      path: '/new'
+      fullPath: '/finance/receipts/new'
+      preLoaderRoute: typeof authedFinanceReceiptsNewRouteImport
+      parentRoute: typeof authedFinanceReceiptsRouteRoute
+    }
+    '/(authed)/finance/receipts/$receiptId/edit': {
+      id: '/(authed)/finance/receipts/$receiptId/edit'
+      path: '/$receiptId/edit'
+      fullPath: '/finance/receipts/$receiptId/edit'
+      preLoaderRoute: typeof authedFinanceReceiptsReceiptIdEditRouteImport
+      parentRoute: typeof authedFinanceReceiptsRouteRoute
+    }
   }
 }
 
+interface authedFinanceReceiptsRouteRouteChildren {
+  authedFinanceReceiptsNewRoute: typeof authedFinanceReceiptsNewRoute
+  authedFinanceReceiptsIndexRoute: typeof authedFinanceReceiptsIndexRoute
+  authedFinanceReceiptsReceiptIdEditRoute: typeof authedFinanceReceiptsReceiptIdEditRoute
+}
+
+const authedFinanceReceiptsRouteRouteChildren: authedFinanceReceiptsRouteRouteChildren =
+  {
+    authedFinanceReceiptsNewRoute: authedFinanceReceiptsNewRoute,
+    authedFinanceReceiptsIndexRoute: authedFinanceReceiptsIndexRoute,
+    authedFinanceReceiptsReceiptIdEditRoute:
+      authedFinanceReceiptsReceiptIdEditRoute,
+  }
+
+const authedFinanceReceiptsRouteRouteWithChildren =
+  authedFinanceReceiptsRouteRoute._addFileChildren(
+    authedFinanceReceiptsRouteRouteChildren,
+  )
+
 interface authedFinanceRouteRouteChildren {
+  authedFinanceReceiptsRouteRoute: typeof authedFinanceReceiptsRouteRouteWithChildren
   authedFinanceChartOfAccountsRoute: typeof authedFinanceChartOfAccountsRoute
   authedFinanceDashboardRoute: typeof authedFinanceDashboardRoute
 }
 
 const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
+  authedFinanceReceiptsRouteRoute: authedFinanceReceiptsRouteRouteWithChildren,
   authedFinanceChartOfAccountsRoute: authedFinanceChartOfAccountsRoute,
   authedFinanceDashboardRoute: authedFinanceDashboardRoute,
 }
