@@ -2,130 +2,130 @@
 
 import { format } from "date-fns";
 
-type DiscountType = 'percentage' | 'amount';
-type VatType = 'none' | 'inclusive' | 'exclusive';
+type DiscountType = "percentage" | "amount";
+type VatType = "none" | "inclusive" | "exclusive";
 
 type DateRangeString = { from: string; to: string };
 type DateRangeDate = { from: Date; to: Date };
 
 export interface OnSuccess {
-  onSuccess: () => void;
+	onSuccess: () => void;
 }
 
 export const currencyFormatter = (
-  value: string | number,
-  isCurrency = true,
-  compact?: boolean,
-  replaceZeroNumbers = false,
+	value: string | number,
+	isCurrency = true,
+	compact?: boolean,
+	replaceZeroNumbers = false,
 ) => {
-  const numberValue = typeof value === 'string' ? parseFloat(value) : value;
-  const formatted = new Intl.NumberFormat('en-KE', {
-    style: isCurrency ? 'currency' : 'decimal',
-    currency: 'KES',
-    notation: compact ? 'compact' : 'standard',
-    compactDisplay: 'short',
-    maximumFractionDigits: 2,
-  }).format(numberValue);
+	const numberValue = typeof value === "string" ? parseFloat(value) : value;
+	const formatted = new Intl.NumberFormat("en-KE", {
+		style: isCurrency ? "currency" : "decimal",
+		currency: "KES",
+		notation: compact ? "compact" : "standard",
+		compactDisplay: "short",
+		maximumFractionDigits: 2,
+	}).format(numberValue);
 
-  if (!replaceZeroNumbers) {
-    return formatted;
-  }
+	if (!replaceZeroNumbers) {
+		return formatted;
+	}
 
-  if (replaceZeroNumbers && numberValue === 0) {
-    return '-';
-  }
+	if (replaceZeroNumbers && numberValue === 0) {
+		return "-";
+	}
 
-  return formatted;
+	return formatted;
 };
 
 export const dateFormat = (
-  date: Date | string,
-  formattingType: 'regular' | 'reporting' | 'long' = 'regular',
+	date: Date | string,
+	formattingType: "regular" | "reporting" | "long" = "regular",
 ) => {
-  if (formattingType === 'reporting') {
-    return format(new Date(date), 'dd/MM/yyyy');
-  } else if (formattingType === 'long') {
-    return format(new Date(date), 'PPP');
-  }
-  return format(new Date(date), 'yyyy-MM-dd');
+	if (formattingType === "reporting") {
+		return format(new Date(date), "dd/MM/yyyy");
+	} else if (formattingType === "long") {
+		return format(new Date(date), "PPP");
+	}
+	return format(new Date(date), "yyyy-MM-dd");
 };
 
 export const discountCalculator = (
-  discountType: DiscountType,
-  discountValue: number,
-  itemsTotal: number,
+	discountType: DiscountType,
+	discountValue: number,
+	itemsTotal: number,
 ) => {
-  let discountAmount = 0;
+	let discountAmount = 0;
 
-  switch (discountType) {
-    case 'percentage':
-      discountAmount = (itemsTotal * discountValue) / 100;
-      break;
-    case 'amount':
-      discountAmount = discountValue;
-      break;
-    default:
-      break;
-  }
+	switch (discountType) {
+		case "percentage":
+			discountAmount = (itemsTotal * discountValue) / 100;
+			break;
+		case "amount":
+			discountAmount = discountValue;
+			break;
+		default:
+			break;
+	}
 
-  return discountAmount;
+	return discountAmount;
 };
 
 export const taxCalculator = (
-  subTotal: number,
-  taxType: VatType,
-  taxRate = 16,
+	subTotal: number,
+	taxType: VatType,
+	taxRate = 16,
 ) => {
-  switch (taxType) {
-    case 'none':
-      return {
-        amountExclusiveTax: subTotal,
-        taxAmount: 0,
-        totalInclusiveTax: subTotal,
-      };
-    case 'inclusive': {
-      const amountExclusiveTax = subTotal / (1 + taxRate / 100);
-      return {
-        amountExclusiveTax,
-        taxAmount: subTotal - amountExclusiveTax,
-        totalInclusiveTax: subTotal,
-      };
-    }
-    case 'exclusive': {
-      const taxAmount = (subTotal * taxRate) / 100;
-      return {
-        amountExclusiveTax: subTotal,
-        taxAmount,
-        totalInclusiveTax: subTotal + taxAmount,
-      };
-    }
-  }
+	switch (taxType) {
+		case "none":
+			return {
+				amountExclusiveTax: subTotal,
+				taxAmount: 0,
+				totalInclusiveTax: subTotal,
+			};
+		case "inclusive": {
+			const amountExclusiveTax = subTotal / (1 + taxRate / 100);
+			return {
+				amountExclusiveTax,
+				taxAmount: subTotal - amountExclusiveTax,
+				totalInclusiveTax: subTotal,
+			};
+		}
+		case "exclusive": {
+			const taxAmount = (subTotal * taxRate) / 100;
+			return {
+				amountExclusiveTax: subTotal,
+				taxAmount,
+				totalInclusiveTax: subTotal + taxAmount,
+			};
+		}
+	}
 };
 
 export function internationalizePhoneNumber(
-  phoneNumber: string,
-  withPlus = false,
+	phoneNumber: string,
+	withPlus = false,
 ) {
-  if (phoneNumber.startsWith('+')) {
-    return phoneNumber;
-  }
-  if (phoneNumber.startsWith('0')) {
-    return withPlus
-      ? `+254${phoneNumber.slice(1)}`
-      : `254${phoneNumber.slice(1)}`;
-  }
-  return phoneNumber;
+	if (phoneNumber.startsWith("+")) {
+		return phoneNumber;
+	}
+	if (phoneNumber.startsWith("0")) {
+		return withPlus
+			? `+254${phoneNumber.slice(1)}`
+			: `254${phoneNumber.slice(1)}`;
+	}
+	return phoneNumber;
 }
 
 export function generateFullPaymentInvoiceNo(
-  paymentNo: number,
-  prefix?: string,
-  padding?: number,
+	paymentNo: number,
+	prefix?: string,
+	padding?: number,
 ) {
-  const paddedPaymentNo = padding
-    ? paymentNo.toString().padStart(padding, '0')
-    : paymentNo.toString();
-  return `${prefix ? `${prefix.toUpperCase()}-` : ''}${paddedPaymentNo}`;
+	const paddedPaymentNo = padding
+		? paymentNo.toString().padStart(padding, "0")
+		: paymentNo.toString();
+	return `${prefix ? `${prefix.toUpperCase()}-` : ""}${paddedPaymentNo}`;
 }
 
 /**
@@ -137,74 +137,80 @@ export function generateFullPaymentInvoiceNo(
  * @returns Object with normalized from and to dates as ISO strings
  */
 export function normalizeDateRange(
-  from: string | Date,
-  to: string | Date,
-  returnAsDate: true,
+	from: string | Date,
+	to: string | Date,
+	returnAsDate: true,
 ): DateRangeDate;
 export function normalizeDateRange(
-  from: string | Date,
-  to: string | Date,
-  returnAsDate?: false,
+	from: string | Date,
+	to: string | Date,
+	returnAsDate?: false,
 ): DateRangeString;
 export function normalizeDateRange(
-  from: string | Date,
-  to: string | Date,
-  returnAsDate = false,
+	from: string | Date,
+	to: string | Date,
+	returnAsDate = false,
 ): DateRangeString | DateRangeDate {
-  const processDate = (date: string | Date, type: 'from' | 'to') => {
-    const d = new Date(date);
-    if (Number.isNaN(d.getTime())) {
-      throw new Error(`Invalid "${type}" date provided`);
-    }
-    if (type === 'from') {
-      d.setUTCHours(0, 0, 0, 0);
-    } else {
-      d.setUTCHours(23, 59, 59, 999);
-    }
-    return d;
-  };
+	const processDate = (date: string | Date, type: "from" | "to") => {
+		const d = new Date(date);
+		if (Number.isNaN(d.getTime())) {
+			throw new Error(`Invalid "${type}" date provided`);
+		}
+		if (type === "from") {
+			d.setUTCHours(0, 0, 0, 0);
+		} else {
+			d.setUTCHours(23, 59, 59, 999);
+		}
+		return d;
+	};
 
-  const fromDate = processDate(from, 'from');
-  const normalizedFrom = fromDate.toISOString();
+	const fromDate = processDate(from, "from");
+	const normalizedFrom = fromDate.toISOString();
 
-  const toDate = processDate(to, 'to');
-  const normalizedTo = toDate.toISOString();
+	const toDate = processDate(to, "to");
+	const normalizedTo = toDate.toISOString();
 
-  if (fromDate && toDate && fromDate > toDate) {
-    throw new Error('"from" date cannot be greater than "to" date');
-  }
+	if (fromDate && toDate && fromDate > toDate) {
+		throw new Error('"from" date cannot be greater than "to" date');
+	}
 
-  if (returnAsDate) {
-    return {
-      from: fromDate,
-      to: toDate,
-    };
-  }
+	if (returnAsDate) {
+		return {
+			from: fromDate,
+			to: toDate,
+		};
+	}
 
-  return {
-    from: normalizedFrom,
-    to: normalizedTo,
-  };
+	return {
+		from: normalizedFrom,
+		to: normalizedTo,
+	};
 }
 
 export function percentageChangeCalculator(current: number, previous: number) {
-  if (previous === 0) {
-    return { value: current === 0 ? 0 : 100, isPositive: current >= 0 };
-  }
+	if (previous === 0) {
+		return { value: current === 0 ? 0 : 100, isPositive: current >= 0 };
+	}
 
-  const change = ((current - previous) / previous) * 100;
+	const change = ((current - previous) / previous) * 100;
 
-  return {
-    value: Number.isFinite(change) ? Math.abs(Number(change.toFixed(1))) : 0,
-    isPositive: change >= 0,
-  };
+	return {
+		value: Number.isFinite(change) ? Math.abs(Number(change.toFixed(1))) : 0,
+		isPositive: change >= 0,
+	};
 }
 
 export function percentage(partialValue: number, totalValue: number) {
-  const result = (100 * partialValue) / totalValue;
-  return Number.isFinite(result) ? result : 0;
+	const result = (100 * partialValue) / totalValue;
+	return Number.isFinite(result) ? result : 0;
 }
 export const toNumber = (value: unknown) => {
-  const n = Number.parseFloat(String(value ?? '0'));
-  return Number.isFinite(n) ? n : 0;
+	const n = Number.parseFloat(String(value ?? "0"));
+	return Number.isFinite(n) ? n : 0;
 };
+
+export function normalizeText(value: string | null | undefined): string | null {
+	if (value === null || value === undefined) return null;
+	const trimmed = value.trim();
+	return trimmed === "" ? null : trimmed;
+}
