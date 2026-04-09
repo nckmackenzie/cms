@@ -1,5 +1,11 @@
 {
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite.config.ts",
+    "drizzle.config.ts"
+  ],
+  "exclude": ["node_modules", ".output", ".tanstack", "public","src/db/migrations"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

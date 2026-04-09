@@ -1,13 +1,4 @@
-import {
-	endOfMonth,
-	format,
-	isEqual,
-	startOfDay,
-	startOfMonth,
-	startOfYear,
-	subDays,
-	subMonths,
-} from "date-fns";
+import { format, isEqual, startOfDay, subDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -28,6 +19,30 @@ import {
 } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+
+type FinancialYearRange = {
+	currentYear: { from: Date; to: Date };
+	previousYear: { from: Date; to: Date };
+};
+
+export function getFinancialYearRanges(date?: Date): FinancialYearRange {
+	const ref = date ?? new Date();
+	const year = ref.getFullYear();
+	const month = ref.getMonth(); // 0-indexed: Oct = 9
+
+	const fyStartYear = month >= 9 ? year : year - 1;
+
+	const currentYearFrom = new Date(fyStartYear, 9, 1);
+	const currentYearTo = ref;
+
+	const previousYearFrom = new Date(fyStartYear - 1, 9, 1);
+	const previousYearTo = new Date(fyStartYear, 8, 30);
+
+	return {
+		currentYear: { from: currentYearFrom, to: currentYearTo },
+		previousYear: { from: previousYearFrom, to: previousYearTo },
+	};
+}
 
 type DateRangePickerProps = {
 	initialDateRange?: DateRange;
@@ -55,17 +70,13 @@ export function DatePicker({
 			{ label: "Last 7 days", range: { from: subDays(today, 6), to: today } },
 			{ label: "Last 30 days", range: { from: subDays(today, 29), to: today } },
 			{
-				label: "Month to date",
-				range: { from: startOfMonth(today), to: today },
+				label: "Year to date",
+				range: getFinancialYearRanges(today).currentYear,
 			},
 			{
-				label: "Last month",
-				range: {
-					from: startOfMonth(subMonths(today, 1)),
-					to: endOfMonth(subMonths(today, 1)),
-				},
+				label: "Previous year",
+				range: getFinancialYearRanges(today).previousYear,
 			},
-			{ label: "Year to date", range: { from: startOfYear(today), to: today } },
 		],
 		[today],
 	);
@@ -196,7 +207,7 @@ export function DatePicker({
 											type="button"
 											variant="ghost"
 											className={cn(
-												"h-8 w-full justify-start",
+												"h-8 w-full justify-start text-foreground",
 												selectedPreset === preset.label && "bg-accent",
 											)}
 											onClick={() => {

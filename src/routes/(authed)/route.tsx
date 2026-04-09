@@ -1,13 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AnyRouteMatch } from "@tanstack/react-router";
 import {
 	createFileRoute,
 	Link,
 	Outlet,
 	redirect,
+	useMatches,
 	useRouter,
 } from "@tanstack/react-router";
 import { Loader2Icon, LogOutIcon, UserKeyIcon } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
@@ -83,19 +85,7 @@ function RouteComponent() {
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b border-b-border">
 					<div className="flex items-center gap-2 px-4">
 						<SidebarTrigger className="-ml-1 inline-flex md:hidden" />
-						<Breadcrumb>
-							<BreadcrumbList>
-								<BreadcrumbItem className="hidden md:block">
-									<BreadcrumbLink href="/">
-										Build Your Application
-									</BreadcrumbLink>
-								</BreadcrumbItem>
-								<BreadcrumbSeparator className="hidden md:block" />
-								<BreadcrumbItem>
-									<BreadcrumbPage>Data Fetching</BreadcrumbPage>
-								</BreadcrumbItem>
-							</BreadcrumbList>
-						</Breadcrumb>
+						<RouterBreadcrumb />
 					</div>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -245,5 +235,79 @@ function NavItems() {
 				</SidebarGroup>
 			))}
 		</div>
+	);
+}
+
+export type BreadcrumbValue =
+	| string
+	| string[]
+	| ((match: AnyRouteMatch) => string | string[]);
+
+type ResolvedBreadcrumbItem = {
+	path: string;
+	label: string;
+};
+
+export function RouterBreadcrumb() {
+	const matches = useMatches();
+
+	const breadcrumbs: ResolvedBreadcrumbItem[] = matches.flatMap((match) => {
+		const staticData = match.staticData;
+		if (!staticData?.breadcrumb) return [];
+
+		// If breadcrumb is a function, only resolve it if loader data is available
+		if (typeof staticData.breadcrumb === "function") {
+			// Skip if match hasn't successfully loaded yet
+			if (match.status !== "success" || !match.loaderData) {
+				return [];
+			}
+			const breadcrumbValue = staticData.breadcrumb(match);
+			const items = Array.isArray(breadcrumbValue)
+				? breadcrumbValue
+				: [breadcrumbValue];
+			return items.map((item) => ({
+				label: item,
+				path: match.pathname,
+			}));
+		}
+
+		// Static breadcrumbs are safe to use immediately
+		const items = Array.isArray(staticData.breadcrumb)
+			? staticData.breadcrumb
+			: [staticData.breadcrumb];
+
+		return items.map((item) => ({
+			label: item,
+			path: match.pathname,
+		}));
+	});
+
+	if (breadcrumbs.length === 0) {
+		return null;
+	}
+
+	return (
+		<Breadcrumb>
+			<BreadcrumbList>
+				{breadcrumbs.map((crumb, index) => {
+					const isLast = index === breadcrumbs.length - 1;
+
+					return (
+						<Fragment key={`${crumb.path}-${index}`}>
+							<BreadcrumbItem>
+								{isLast ? (
+									<BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+								) : (
+									<BreadcrumbLink asChild>
+										<Link to={crumb.path}>{crumb.label}</Link>
+									</BreadcrumbLink>
+								)}
+							</BreadcrumbItem>
+							{!isLast && <BreadcrumbSeparator />}
+						</Fragment>
+					);
+				})}
+			</BreadcrumbList>
+		</Breadcrumb>
 	);
 }

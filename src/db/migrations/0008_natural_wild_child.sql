@@ -1,1 +1,0 @@
-ALTER TABLE "ledger_accounts" ALTER COLUMN "congregation_id" DROP NOT NULL;

@@ -1,5 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
-import { CheckIcon, XIcon } from "lucide-react";
+import { SaveIcon, XIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button, type buttonVariants } from "#/components/ui/button";
 import { ComboBox } from "#/components/ui/custom-select";
@@ -77,7 +77,7 @@ export function SubmitButton({
 							isLoading={isSubmitting || !!isLoading}
 							className="flex gap-2 items-center"
 						>
-							{icon || <CheckIcon />}
+							{icon || <SaveIcon />}
 							{buttonText}
 						</LoadingSwap>
 					</Button>
@@ -212,6 +212,7 @@ type SelectProps = {
 	placeholder?: string;
 	className?: string;
 	disabled?: boolean;
+	isNumber?: boolean;
 } & ComponentProps<typeof ShadcnSelect.Select> &
 	UniversalFieldProps;
 
@@ -223,16 +224,19 @@ export function Select({
 	helperText,
 	className,
 	disabled,
+	isNumber,
 }: SelectProps) {
-	const field = useFieldContext<string>();
+	const field = useFieldContext<string | number | null | undefined>();
 	const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
 
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
 			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
 			<ShadcnSelect.Select
-				onValueChange={(e) => field.handleChange(e)}
-				value={field.state.value}
+				onValueChange={(e) =>
+					field.handleChange(isNumber ? (e ? Number(e) : null) : e)
+				}
+				value={field.state.value?.toString() || ""}
 			>
 				<ShadcnSelect.SelectTrigger
 					aria-invalid={isInvalid}

@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { getCurrentUserFn } from "#/features/auth/services/auth.api";
 import { SheetProvider } from "#/integrations/providers/sheet-provider";
+import type { getRouter } from "#/router";
 import {
 	GlobalNotFound,
 	GlobalPendingComponent,
@@ -18,9 +19,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import TanStackQueryProvider from "../integrations/tanstack-query/root-provider";
 import appCss from "../styles.css?url";
+import type { BreadcrumbValue } from "./(authed)/route";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
+}
+
+declare module "@tanstack/react-router" {
+	interface Register {
+		router: ReturnType<typeof getRouter>;
+	}
+	interface StaticDataRouteOption {
+		breadcrumb?: BreadcrumbValue;
+	}
 }
 
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;

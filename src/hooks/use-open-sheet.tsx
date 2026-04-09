@@ -69,6 +69,7 @@ export function useOpenSheet<TSearch>({
 				if (!open) closeSheet();
 			},
 			className: config.options?.className || "max-w-2xl!",
+			side: config.options?.side || "right",
 		});
 
 		return () => {

@@ -51,18 +51,23 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 
 			if (!result.success) {
 				onErrorCallback?.(result.error, isEdit);
-				toast.error("Something went wrong", {
-					description: result.error.message,
-				});
 				if (result.error.type === "AuthenticationError") {
 					toast.error("Unauthenticated request!", {
-						description: "You need to be logged in to perform this action!",
+						description: (
+							<p className="text-xs text-muted-foreground">
+								You need to be logged in to perform this action!
+							</p>
+						),
 					});
 					navigate({ to: "/login" });
 					return;
 				}
 				toast.error("Something went wrong", {
-					description: result.error.message,
+					description: (
+						<p className="text-xs text-muted-foreground">
+							{result.error.message}
+						</p>
+					),
 				});
 				return;
 			}
@@ -73,7 +78,11 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 				? successMessage?.update || defaultMessage
 				: successMessage?.create || defaultMessage;
 			if (displaySuccessToast) {
-				toast.success("Success", { description: message });
+				toast.success("Success", {
+					description: (
+						<p className="text-xs text-muted-foreground">{message}</p>
+					),
+				});
 			}
 
 			onReset?.();

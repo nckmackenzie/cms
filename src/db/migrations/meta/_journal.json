@@ -5,78 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773236008652,
-      "tag": "0000_complex_ser_duncan",
+      "when": 1775666772308,
+      "tag": "0000_right_mephistopheles",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1773246277331,
-      "tag": "0001_fixed_monster_badoon",
+      "when": 1775711304279,
+      "tag": "0001_silly_ben_parker",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1773246900432,
-      "tag": "0002_typical_falcon",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773251493503,
-      "tag": "0003_woozy_daredevil",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1773251639747,
-      "tag": "0004_fantastic_tusk",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1773299628424,
-      "tag": "0005_high_stellaris",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1773423727650,
-      "tag": "0006_fresh_human_fly",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1773424060746,
-      "tag": "0007_eager_stellaris",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1773428170743,
-      "tag": "0008_natural_wild_child",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1773661802492,
-      "tag": "0009_typical_rictor",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1773727610551,
-      "tag": "0010_exotic_wiccan",
+      "when": 1775715255577,
+      "tag": "0002_past_clea",
       "breakpoints": true
     }
   ]

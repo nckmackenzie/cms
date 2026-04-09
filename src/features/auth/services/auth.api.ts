@@ -268,17 +268,10 @@ export const loginFn = createServerFn({ method: "POST" })
 			});
 		}
 
-		// Rollback reference:
-		// await session.update({
-		// 	id: user.id,
-		// 	congregationId: user.congregationId,
-		// 	userName: user.userName,
-		// 	userType: user.userType,
-		// });
 		await session.update(
 			{
 				id: user.id,
-				congregationId: user.congregationId,
+				congregationId,
 				userName: user.userName,
 				userType: user.userType,
 			},
@@ -476,11 +469,23 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(
 			where: eq(users.id, userId),
 		});
 
-		if (!user) {
+		if (!user || !session.data.congregationId) {
 			await session.clear();
 			return null;
 		}
 
-		return user;
+		const sessionCongregationId = session.data.congregationId;
+		if (
+			typeof sessionCongregationId !== "number" ||
+			Number.isNaN(sessionCongregationId)
+		) {
+			await session.clear();
+			return null;
+		}
+
+		return {
+			...user,
+			congregationId: session.data.congregationId,
+		};
 	},
 );
