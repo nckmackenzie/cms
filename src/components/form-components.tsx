@@ -65,8 +65,21 @@ export function SubmitButton({
 			{(isSubmitting) => (
 				<Field
 					orientation={isMobile ? "vertical" : orientation || "horizontal"}
-					className={fieldClassName}
+					className={cn("gap-4", fieldClassName)}
 				>
+					{withReset && (
+						<Button
+							type="button"
+							disabled={isSubmitting}
+							variant="ghost"
+							size={buttonSize ?? "xl"}
+							onClick={onReset ? () => onReset() : () => form.reset()}
+							className="text-muted-foreground"
+						>
+							{cancelIcon || <XIcon />}
+							{cancelButtonText || "Cancel"}
+						</Button>
+					)}
 					<Button
 						type="submit"
 						className={cn("flex", className)}
@@ -81,18 +94,6 @@ export function SubmitButton({
 							{buttonText}
 						</LoadingSwap>
 					</Button>
-					{withReset && (
-						<Button
-							type="button"
-							disabled={isSubmitting}
-							variant="outline"
-							size={buttonSize ?? "xl"}
-							onClick={onReset ? () => onReset() : () => form.reset()}
-						>
-							{cancelIcon || <XIcon />}
-							{cancelButtonText || "Cancel"}
-						</Button>
-					)}
 				</Field>
 			)}
 		</form.Subscribe>
