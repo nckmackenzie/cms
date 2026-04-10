@@ -1,4 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import type { AnyRouteMatch } from "@tanstack/react-router";
 import {
 	createFileRoute,
@@ -8,6 +12,8 @@ import {
 	useMatches,
 	useRouter,
 } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { eq } from "drizzle-orm";
 import { Loader2Icon, LogOutIcon, UserKeyIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
@@ -23,9 +29,12 @@ import {
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
 import { Input } from "#/components/ui/input";
+import { db } from "#/db";
+import { congregations } from "#/db/schema";
 import { logoutFn } from "#/features/auth/services/auth.api";
 import { MENU_ITEMS } from "#/lib/constants";
 import { toTitleCase } from "#/lib/utils";
+import { authMiddleware } from "#/middleware/auth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
 	Breadcrumb,
@@ -35,7 +44,6 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Command } from "@/components/ui/command";
 import {
 	Sidebar,
 	SidebarContent,
@@ -51,12 +59,47 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+const parishCongregationNameFormatter = (name: string) => {
+	if (name.toLowerCase().startsWith("pcea")) {
+		return `PCEA ${toTitleCase(name.slice(4))}`;
+	} else if (name.toLowerCase().startsWith("p.c.e.a")) {
+		return `P.C.E.A ${toTitleCase(name.replaceAll(".", "").slice(4))}`;
+	}
+	return toTitleCase(name);
+};
+
+const getCongregationInfo = createServerFn()
+	.middleware([authMiddleware])
+	.handler(async ({ context }) => {
+		const congregation = await db.query.congregations.findFirst({
+			columns: { parishName: true, congregationName: true },
+			where: eq(congregations.id, context.user.congregationId),
+		});
+
+		if (!congregation) {
+			throw redirect({ to: "/login" });
+		}
+
+		return congregation;
+	});
+const congregationQuery = (congregationId: number) =>
+	queryOptions({
+		queryKey: ["congregation", congregationId],
+		queryFn: () => getCongregationInfo(),
+	});
+
 export const Route = createFileRoute("/(authed)")({
 	beforeLoad: async ({ context }) => {
 		if (!context.user) {
 			throw redirect({ to: "/login" });
 		}
 		return { user: context.user };
+	},
+	loader: async ({ context: { queryClient, user } }) => {
+		const congregation = await queryClient.ensureQueryData(
+			congregationQuery(user.congregationId),
+		);
+		return { congregation };
 	},
 	component: RouteComponent,
 });
@@ -66,6 +109,7 @@ function RouteComponent() {
 	const avatarUrl = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user.userName)}`;
 	const router = useRouter();
 	const queryClient = useQueryClient();
+
 	const { mutate, isPending } = useMutation({
 		mutationFn: () => logoutFn(),
 		onSuccess: async () => {
@@ -148,13 +192,33 @@ function RouteComponent() {
 }
 
 function AppSidebar() {
+	const {
+		congregation: { parishName, congregationName },
+	} = Route.useLoaderData();
 	return (
 		<Sidebar variant="sidebar" className="border-r border-r-border">
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
-							<a href="/">
+							<Link to="/">
+								<img
+									src="/logo32.png"
+									alt="Logo"
+									className="size-8 object-fit"
+								/>
+								<div className="grid flex-1 text-left text-sm leading-tight">
+									<span className="truncate font-medium capitalize">
+										{parishName
+											? parishCongregationNameFormatter(parishName)
+											: "Parish Name"}
+									</span>
+									<span className="truncate text-xs capitalize">
+										{parishCongregationNameFormatter(congregationName)}
+									</span>
+								</div>
+							</Link>
+							{/* <a href="/">
 								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
 									<Command className="size-4" />
 								</div>
@@ -162,7 +226,7 @@ function AppSidebar() {
 									<span className="truncate font-medium">Acme Inc</span>
 									<span className="truncate text-xs">Enterprise</span>
 								</div>
-							</a>
+							</a> */}
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
