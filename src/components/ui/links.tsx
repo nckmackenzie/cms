@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import type { VariantProps } from "class-variance-authority";
 import { ArrowLeftIcon } from "lucide-react";
 import type { Route } from "#/lib/constants";
@@ -19,17 +19,38 @@ export function BackLink({
 	size?: VariantProps<typeof buttonVariants>["size"];
 	href?: Route["to"];
 }) {
+	const router = useRouter();
+	if (href) {
+		return (
+			<Button
+				variant={variant}
+				size={size || "sm"}
+				className={cn(
+					"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
+					className,
+				)}
+				asChild
+			>
+				<Link to={href}>
+					<ArrowLeftIcon className="arrow shrink-0" />
+					{children}
+				</Link>
+			</Button>
+		);
+	}
 	return (
 		<Button
 			variant={variant}
 			size={size || "sm"}
-			className={cn("", className)}
+			className={cn(
+				"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
+				className,
+			)}
 			asChild
+			onClick={() => router.history.back()}
 		>
-			<Link to={href ?? ".."}>
-				<ArrowLeftIcon />
-				{children}
-			</Link>
+			<ArrowLeftIcon className="arrow shrink-0" />
+			{children}
 		</Button>
 	);
 }
