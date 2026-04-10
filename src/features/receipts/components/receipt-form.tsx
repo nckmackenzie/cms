@@ -22,6 +22,7 @@ import {
 	CardHeader,
 } from "#/components/ui/card";
 import { FieldGroup } from "#/components/ui/field";
+import { BackLink } from "#/components/ui/links";
 import { receiptQueries } from "#/features/receipts/services/queries";
 import { upsertReceipt as upsertReceiptApi } from "#/features/receipts/services/receipts.api";
 import {
@@ -66,7 +67,7 @@ export function ReceiptsForm({
 			upsertReceiptApi({ data: values }),
 		entityName: "Receipt",
 		queryKey: ["receipts"],
-		navigateTo: isEdit ? "/finance/receipts" : undefined,
+		navigateTo: "/finance/receipts",
 	});
 
 	const defaultValues: ReceiptsFormValues = initialValues ?? {
@@ -139,7 +140,10 @@ export function ReceiptsForm({
 				}}
 				className="form-spacing"
 			>
-				<FieldGroup>
+				<FieldGroup className="flex-row">
+					<BackLink href="/finance/receipts" size="xl">
+						Back to Receipts
+					</BackLink>
 					<form.AppForm>
 						<form.SubmitButton
 							fieldClassName="justify-end"
