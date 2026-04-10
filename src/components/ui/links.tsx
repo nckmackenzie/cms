@@ -25,6 +25,7 @@ export function BackLink({
 			<Button
 				variant={variant}
 				size={size || "sm"}
+				type="button"
 				className={cn(
 					"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
 					className,
@@ -42,6 +43,7 @@ export function BackLink({
 		<Button
 			variant={variant}
 			size={size || "sm"}
+			type="button"
 			className={cn(
 				"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
 				className,
