@@ -211,5 +211,18 @@
   .form-spacing{
     @apply space-y-4;
   }
+
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+
+  input[readonly] {
+    @apply bg-muted! text-muted-foreground! cursor-not-allowed!;
+  }
 }
 
