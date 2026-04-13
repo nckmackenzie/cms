@@ -4,6 +4,22 @@ import { db } from "#/db";
 import { groups } from "#/db/schema";
 import { authMiddleware } from "#/middleware/auth";
 
+export const getGroupIdFn = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((data: { publicId: string }) => data)
+	.handler(async ({ data }) => {
+		const { publicId } = data;
+		const [result] = await db
+			.select({ id: groups.id })
+			.from(groups)
+			.where(eq(groups.publicId, publicId))
+			.limit(1);
+		if (!result) {
+			throw new Error("Group not found");
+		}
+		return result.id;
+	});
+
 export const getCongregationGroups = createServerFn()
 	.middleware([authMiddleware])
 	.handler(
