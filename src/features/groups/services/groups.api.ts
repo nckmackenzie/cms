@@ -14,7 +14,7 @@ export const getCongregationGroups = createServerFn()
 		}) => {
 			return db
 				.select({
-					value: groups.id,
+					value: groups.publicId,
 					label: groups.groupName,
 				})
 				.from(groups)

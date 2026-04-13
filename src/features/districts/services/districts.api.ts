@@ -14,7 +14,7 @@ export const getCongregationDistricts = createServerFn()
 		}) => {
 			return db
 				.select({
-					value: districts.id,
+					value: districts.publicId,
 					label: districts.districtName,
 				})
 				.from(districts)
