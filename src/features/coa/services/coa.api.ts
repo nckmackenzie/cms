@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
-import type { z } from "zod";
+import { z } from "zod";
 import { db } from "#/db";
-import { ledgerAccounts } from "#/db/schema";
+import { ACCOUNT_TYPES, ledgerAccounts } from "#/db/schema";
 import {
 	accountsFormSchema,
 	coaValidateSearch,
@@ -161,6 +161,40 @@ export const getBankAccounts = createServerFn()
 						label: d.accountNo
 							? `${d.name.toUpperCase()} - ${d.accountNo}`
 							: d.name.toUpperCase(),
+					})),
+				);
+		},
+	);
+
+export const getPostingAccounts = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(z.object({ search: z.enum(ACCOUNT_TYPES).optional() }))
+	.handler(
+		async ({
+			data: { search },
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			return db.query.ledgerAccounts
+				.findMany({
+					columns: { id: true, name: true },
+					where: and(
+						eq(ledgerAccounts.isPosting, true),
+						eq(ledgerAccounts.active, true),
+						isNull(ledgerAccounts.deletedAt),
+						or(
+							eq(ledgerAccounts.congregationId, congregationId),
+							isNull(ledgerAccounts.congregationId),
+						),
+						search ? eq(ledgerAccounts.accountType, search) : undefined,
+					),
+					orderBy: asc(ledgerAccounts.name),
+				})
+				.then((data) =>
+					data.map((d) => ({
+						value: d.id.toString(),
+						label: d.name.toUpperCase(),
 					})),
 				);
 		},

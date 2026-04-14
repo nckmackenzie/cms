@@ -1,5 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getAccounts, getBankAccounts } from "#/features/coa/services/coa.api";
+import {
+	type AccountType,
+	getAccounts,
+	getBankAccounts,
+	getPostingAccounts,
+} from "#/features/coa/services/coa.api";
 import type { CoaValidateSearch } from "#/features/coa/utils/schemas";
 import { toTitleCase } from "#/lib/utils";
 
@@ -9,6 +14,11 @@ export const accountQueries = {
 		queryOptions({
 			queryKey: [...accountQueries.all, "list", filters],
 			queryFn: () => getAccounts({ data: filters }),
+		}),
+	postingAccounts: (accountType?: AccountType) =>
+		queryOptions({
+			queryKey: [...accountQueries.all, "posting-accounts", accountType],
+			queryFn: () => getPostingAccounts({ data: { search: accountType } }),
 		}),
 	incomePostingAccounts: () =>
 		queryOptions({
