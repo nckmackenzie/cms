@@ -147,7 +147,7 @@ export const getBankAccounts = createServerFn()
 		}) => {
 			return db.query.ledgerAccounts
 				.findMany({
-					columns: { id: true, name: true, accountNo: true },
+					columns: { publicId: true, name: true, accountNo: true },
 					where: and(
 						eq(ledgerAccounts.isBank, true),
 						eq(ledgerAccounts.active, true),
@@ -157,7 +157,7 @@ export const getBankAccounts = createServerFn()
 				})
 				.then((data) =>
 					data.map((d) => ({
-						value: d.id.toString(),
+						value: d.publicId,
 						label: d.accountNo
 							? `${d.name.toUpperCase()} - ${d.accountNo}`
 							: d.name.toUpperCase(),
@@ -178,7 +178,7 @@ export const getPostingAccounts = createServerFn()
 		}) => {
 			return db.query.ledgerAccounts
 				.findMany({
-					columns: { id: true, name: true },
+					columns: { publicId: true, name: true },
 					where: and(
 						eq(ledgerAccounts.isPosting, true),
 						eq(ledgerAccounts.active, true),
@@ -193,7 +193,7 @@ export const getPostingAccounts = createServerFn()
 				})
 				.then((data) =>
 					data.map((d) => ({
-						value: d.id.toString(),
+						value: d.publicId,
 						label: d.name.toUpperCase(),
 					})),
 				);
@@ -301,4 +301,18 @@ export const deleteAccount = createServerFn({ method: "POST" })
 				message: "Error deleting account",
 			});
 		}
+	});
+
+export const getAccountByPublicId = createServerFn({ method: "GET" })
+	.middleware([authMiddleware])
+	.inputValidator((data: string) => data)
+	.handler(async ({ data }) => {
+		const account = await db.query.ledgerAccounts.findFirst({
+			columns: { id: true },
+			where: eq(ledgerAccounts.publicId, data),
+		});
+		if (!account) {
+			throw new Error("Account not found");
+		}
+		return account.id;
 	});
