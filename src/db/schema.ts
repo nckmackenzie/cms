@@ -65,6 +65,23 @@ export const bankTransactionMethodEnum = pgEnum(
 	BANK_TRANSACTION_METHODS,
 );
 
+export const FUND_REQUISITION_STATUS = [
+	"pending",
+	"approved",
+	"rejected",
+] as const;
+export type FundRequisitionStatus = (typeof FUND_REQUISITION_STATUS)[number];
+export const fundRequisitionStatusEnum = pgEnum(
+	"fund_requisition_status_enum",
+	FUND_REQUISITION_STATUS,
+);
+export const FUND_REQUISITION_TYPE = ["group", "district", "church"] as const;
+export type FundRequisitionType = (typeof FUND_REQUISITION_TYPE)[number];
+export const fundRequisitionTypeEnum = pgEnum(
+	"fund_requisition_type_enum",
+	FUND_REQUISITION_TYPE,
+);
+
 export const congregations = pgTable(
 	"congregations",
 	{
@@ -437,6 +454,148 @@ export const sessions = pgTable(
 	],
 );
 
+export const churchRequisitionCategories = pgTable(
+	"church_requisition_categories",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		name: varchar("name", { length: 255 }).notNull(),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+);
+
+export const fundRequisitions = pgTable(
+	"fund_requisitions",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		requisitionNo: integer("requisition_no").notNull(),
+		requisitionDate: date("requisition_date").notNull(),
+		requestType: fundRequisitionTypeEnum("request_type").notNull(),
+		districtId: integer("district_id").references(() => districts.id),
+		groupId: integer("group_id").references(() => groups.id),
+		churchCategoryId: integer("church_category_id").references(
+			() => churchRequisitionCategories.id,
+		),
+		purpose: varchar("purpose", { length: 255 }).notNull(),
+		status: fundRequisitionStatusEnum("status").notNull().default("pending"),
+		amountRequested: numeric("amount_requested", {
+			precision: 10,
+			scale: 2,
+		}).notNull(),
+		amountApproved: numeric("amount_approved", {
+			precision: 10,
+			scale: 2,
+		}),
+		requestedBy: integer("requested_by").references(() => users.id),
+		approvedBy: integer("approved_by").references(() => users.id),
+		approvedDate: date("approved_date"),
+		dontDeduct: boolean("dont_deduct").notNull().default(false),
+		rejectionReason: varchar("rejection_reason", { length: 255 }),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		paymentMethod: paymentMethodEnum("payment_method"),
+		reference: varchar("reference", { length: 255 }),
+		debitingAccountId: integer("debiting_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(t) => [
+		index("fund_requisitions_requisition_no_idx").on(t.requisitionNo),
+		index("fund_requisitions_requisition_date_idx").on(t.requisitionDate),
+		index("fund_requisitions_request_type_idx").on(t.requestType),
+		index("fund_requisitions_status_idx").on(t.status),
+		index("fund_requisitions_congregation_id_idx").on(t.congregationId),
+		index("fund_requisitions_reference_idx").on(t.reference),
+	],
+);
+
+export const mmf = pgTable(
+	"mmfs",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		transactionDate: date("transaction_date").notNull(),
+		type: fundRequisitionTypeEnum("request_type").notNull(),
+		groupId: integer("group_id").references(() => groups.id),
+		districtId: integer("district_id").references(() => districts.id),
+		dc: lineDcEnum("dc").notNull(),
+		amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		subAccountId: integer("sub_account_id").references(() => subAccounts.id),
+		reference: varchar("reference", { length: 255 }),
+		narration: varchar("narration", { length: 255 }),
+		source: varchar("source_type", { length: 50 }),
+		sourceId: varchar("source_id", { length: 50 }),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(t) => [
+		index("mmfs_transaction_date_idx").on(t.transactionDate),
+		index("mmfs_reference_idx").on(t.reference),
+	],
+);
+
+export const mmfRelations = relations(mmf, ({ one }) => ({
+	district: one(districts, {
+		fields: [mmf.districtId],
+		references: [districts.id],
+	}),
+	group: one(groups, {
+		fields: [mmf.groupId],
+		references: [groups.id],
+	}),
+	bank: one(ledgerAccounts, {
+		fields: [mmf.bankId],
+		references: [ledgerAccounts.id],
+	}),
+	subAccount: one(subAccounts, {
+		fields: [mmf.subAccountId],
+		references: [subAccounts.id],
+	}),
+	congregation: one(congregations, {
+		fields: [mmf.congregationId],
+		references: [congregations.id],
+	}),
+}));
+
+export const fundRequisitionsRelations = relations(
+	fundRequisitions,
+	({ one }) => ({
+		district: one(districts, {
+			fields: [fundRequisitions.districtId],
+			references: [districts.id],
+		}),
+		group: one(groups, {
+			fields: [fundRequisitions.groupId],
+			references: [groups.id],
+		}),
+		requestedBy: one(users, {
+			fields: [fundRequisitions.requestedBy],
+			references: [users.id],
+		}),
+		approvedBy: one(users, {
+			fields: [fundRequisitions.approvedBy],
+			references: [users.id],
+		}),
+		congregation: one(congregations, {
+			fields: [fundRequisitions.congregationId],
+			references: [congregations.id],
+		}),
+	}),
+);
+
 export const congregationsRelations = relations(congregations, ({ many }) => ({
 	districts: many(districts),
 	groups: many(groups),
@@ -444,6 +603,7 @@ export const congregationsRelations = relations(congregations, ({ many }) => ({
 	receiptHeaders: many(receiptHeader),
 	services: many(services),
 	users: many(users),
+	churchRequisitionCategories: many(churchRequisitionCategories),
 }));
 
 export const rolesRelations = relations(roles, ({ many }) => ({
