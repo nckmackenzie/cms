@@ -12,10 +12,15 @@ import { getDistrictId } from "#/features/districts/services/districts.api";
 import { getGroupIdFn } from "#/features/groups/services/groups.api";
 
 const balanceSchema = z.object({
-	requestType: z.enum(FUND_REQUISITION_TYPE, {
-		error: (iss) =>
-			!iss.input ? "No request type provided" : "Invalid request type selected",
-	}),
+	requestType: z.enum(
+		FUND_REQUISITION_TYPE.filter((f) => f !== "church"),
+		{
+			error: (iss) =>
+				!iss.input
+					? "No request type provided"
+					: "Invalid request type selected",
+		},
+	),
 	paramId: z.string().min(1, { message: "No param provided" }),
 	requisitionDate: z.iso
 		.date({
@@ -79,7 +84,7 @@ export const Route = createFileRoute("/api/fund-requisitions/get-balance")({
 			GET: async ({ request }) => {
 				const user = await getCurrentUserFn();
 				if (!user) {
-					return new Response("Unauthorized", {
+					return new Response(JSON.stringify({ error: "Unauthorized" }), {
 						status: 401,
 						headers: { "Content-Type": "application/json" },
 					});
