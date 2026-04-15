@@ -35,10 +35,12 @@ export const getBalance = async ({
 	requestType,
 	paramId,
 	requisitionDate,
+	congregationId,
 }: {
 	requestType: FundRequisitionType;
 	paramId: string;
 	requisitionDate: string;
+	congregationId: number;
 }) => {
 	let groupDistrictId: number;
 
@@ -57,6 +59,7 @@ export const getBalance = async ({
 		.where(
 			and(
 				lte(mmf.transactionDate, requisitionDate),
+				eq(mmf.congregationId, congregationId),
 				eq(mmf.type, requestType),
 				isNull(mmf.deletedAt),
 				requestType === "group"
@@ -108,6 +111,7 @@ export const Route = createFileRoute("/api/fund-requisitions/get-balance")({
 						requestType: result.data.requestType,
 						paramId: result.data.paramId,
 						requisitionDate: result.data.requisitionDate,
+						congregationId: user.congregationId,
 					});
 					return new Response(JSON.stringify(balance), {
 						status: 200,
@@ -119,6 +123,7 @@ export const Route = createFileRoute("/api/fund-requisitions/get-balance")({
 						requestType: result.data.requestType,
 						paramId: result.data.paramId,
 						requisitionDate: result.data.requisitionDate,
+						congregationId: user.congregationId,
 					});
 					return new Response(JSON.stringify(balance), {
 						status: 200,

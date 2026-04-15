@@ -6,6 +6,11 @@ import {
 } from "#/db/schema";
 import { queryValidateSearch } from "#/lib/schemas";
 
+const toLocalMidnight = (value: string) => {
+	const [year, month, day] = value.split("-").map(Number);
+	return new Date(year, month - 1, day);
+};
+
 export const fundsRequisitionValidateSearch = queryValidateSearch.safeExtend({
 	status: z
 		.enum(["all", ...FUND_REQUISITION_STATUS])
@@ -24,7 +29,8 @@ export const fundsRequisitionFormValues = z
 			})
 			.refine(
 				(val) =>
-					new Date(val).setHours(0, 0, 0, 0) <= new Date().setHours(0, 0, 0, 0),
+					toLocalMidnight(val).setHours(0, 0, 0, 0) <=
+					new Date().setHours(0, 0, 0, 0),
 				{ error: "Requisition date cannot be in the future" },
 			),
 		requestType: z.enum(FUND_REQUISITION_TYPE, {
@@ -82,8 +88,9 @@ export const actionRequisitionFormValues = z
 			})
 			.refine(
 				(val) =>
-					new Date(val).setHours(0, 0, 0, 0) <= new Date().setHours(0, 0, 0, 0),
-				{ error: "Requisition date cannot be in the future" },
+					toLocalMidnight(val).setHours(0, 0, 0, 0) <=
+					new Date().setHours(0, 0, 0, 0),
+				{ error: "Payment date cannot be in the future" },
 			),
 		bankId: z.string().nullish(),
 		debitingAccountId: z.string().min(1, "Select account"),

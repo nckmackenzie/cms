@@ -61,9 +61,9 @@ const getNextRequisitionNo = async ({
 };
 
 const getChurchCategoryId = async ({
-	data: { publicId },
+	data: { publicId, congregationId },
 }: {
-	data: { publicId: string };
+	data: { publicId: string; congregationId: number };
 }) => {
 	const [category] = await db
 		.select({ id: churchRequisitionCategories.id })
@@ -72,6 +72,7 @@ const getChurchCategoryId = async ({
 			and(
 				eq(churchRequisitionCategories.publicId, publicId),
 				isNull(churchRequisitionCategories.deletedAt),
+				eq(churchRequisitionCategories.congregationId, congregationId),
 			),
 		);
 	if (!category) throw new Error("Category not found");
@@ -96,43 +97,69 @@ const getPendingRequisitionId = async ({
 	});
 };
 
+type ResourcesIdsProps = {
+	requestType: FundsRequisitionValidateForm["requestType"];
+	congregationId: number;
+	groupIdParam?: string;
+	districtIdParam?: string;
+	churchCategoryIdParam?: string;
+};
+
+async function getResourcesIds({
+	requestType,
+	congregationId,
+	churchCategoryIdParam,
+	districtIdParam,
+	groupIdParam,
+}: ResourcesIdsProps) {
+	const [groupId, districtId, churchCategoryId] = await Promise.all([
+		requestType === "group"
+			? getGroupIdFn({ data: { publicId: groupIdParam! } })
+			: null,
+		requestType === "district"
+			? getDistrictId({ data: { publicId: districtIdParam! } })
+			: null,
+		requestType === "church"
+			? getChurchCategoryId({
+					data: { publicId: churchCategoryIdParam!, congregationId },
+				})
+			: null,
+	]);
+	return { groupId, districtId, churchCategoryId };
+}
+
 const createFundRequisition = async (
 	values: FundsRequisitionValidateForm,
 	congregationId: number,
 	userId: number,
 ) => {
 	const { requestType, ...rest } = values;
-	const paramId = requestType === "group" ? rest.groupId : rest.districtId;
-	const balance = await getBalance({
-		requestType,
-		paramId: paramId!,
-		requisitionDate: values.requisitionDate,
-	});
-	if (
-		!rest.dontDeduct &&
-		requestType !== "church" &&
-		balance < values.amountRequested
-	) {
-		return failure({
-			message: "Insufficient balance",
-			type: "ValidationError",
+	if (requestType !== "church") {
+		const paramId = requestType === "group" ? rest.groupId : rest.districtId;
+		const balance = await getBalance({
+			requestType,
+			paramId: paramId!,
+			requisitionDate: values.requisitionDate,
+			congregationId,
 		});
+		if (!rest.dontDeduct && balance < values.amountRequested) {
+			return failure({
+				message: "Insufficient balance",
+				type: "ValidationError",
+			});
+		}
 	}
 
 	try {
-		const [requisitionNo, groupId, districtId, churchCategoryId] =
-			await Promise.all([
-				getNextRequisitionNo({ congregationId }),
-				requestType === "group"
-					? getGroupIdFn({ data: { publicId: rest.groupId! } })
-					: null,
-				requestType === "district"
-					? getDistrictId({ data: { publicId: rest.districtId! } })
-					: null,
-				requestType === "church"
-					? getChurchCategoryId({ data: { publicId: rest.churchCategoryId! } })
-					: null,
-			]);
+		const { groupId, districtId, churchCategoryId } = await getResourcesIds({
+			requestType,
+			congregationId,
+			churchCategoryIdParam: rest.churchCategoryId ?? undefined,
+			districtIdParam: rest.districtId ?? undefined,
+			groupIdParam: rest.groupId ?? undefined,
+		});
+
+		const requisitionNo = await getNextRequisitionNo({ congregationId });
 
 		await db.insert(fundRequisitions).values({
 			requisitionDate: rest.requisitionDate,
@@ -175,25 +202,32 @@ const updateRequisition = async (
 		});
 	}
 
-	const { requestType, districtId, groupId, ...rest } = values;
-	const paramId = requestType === "group" ? groupId : districtId;
-	const balance = await getBalance({
-		requestType,
-		paramId: paramId!,
-		requisitionDate: values.requisitionDate,
-	});
-	if (
-		!rest.dontDeduct &&
-		requestType !== "church" &&
-		balance < values.amountRequested
-	) {
-		return failure({
-			message: "Insufficient balance",
-			type: "ValidationError",
+	const { requestType, ...rest } = values;
+	if (requestType !== "church") {
+		const paramId = requestType === "group" ? rest.groupId : rest.districtId;
+		const balance = await getBalance({
+			requestType,
+			paramId: paramId!,
+			requisitionDate: values.requisitionDate,
+			congregationId,
 		});
+		if (!rest.dontDeduct && balance < values.amountRequested) {
+			return failure({
+				message: "Insufficient balance",
+				type: "ValidationError",
+			});
+		}
 	}
 
 	try {
+		const { groupId, districtId, churchCategoryId } = await getResourcesIds({
+			requestType,
+			congregationId,
+			churchCategoryIdParam: rest.churchCategoryId ?? undefined,
+			districtIdParam: rest.districtId ?? undefined,
+			groupIdParam: rest.groupId ?? undefined,
+		});
+
 		await db
 			.update(fundRequisitions)
 			.set({
@@ -202,20 +236,9 @@ const updateRequisition = async (
 				requestType,
 				congregationId,
 				purpose: rest.purpose,
-				groupId:
-					requestType === "group"
-						? await getGroupIdFn({ data: { publicId: groupId! } })
-						: null,
-				districtId:
-					requestType === "district"
-						? await getDistrictId({ data: { publicId: districtId! } })
-						: null,
-				churchCategoryId:
-					requestType === "church"
-						? await getChurchCategoryId({
-								data: { publicId: rest.churchCategoryId! },
-							})
-						: null,
+				groupId,
+				districtId,
+				churchCategoryId,
 				dontDeduct: rest.dontDeduct,
 			})
 			.where(eq(fundRequisitions.id, requisition.id));
@@ -361,7 +384,7 @@ export const getRequisition = createServerFn()
 				)
 				.limit(1);
 
-			if (!requisition) throw notFound();
+			if (!requisition.length) throw notFound();
 
 			return requisition[0];
 		},
