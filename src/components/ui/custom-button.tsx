@@ -5,7 +5,6 @@ import {
 	PencilIcon,
 	PrinterIcon,
 	SparkleIcon,
-	TrashIcon,
 } from "lucide-react";
 
 export function MoreButton() {
@@ -63,8 +62,8 @@ export function AutomateAction({ text }: { text: string }) {
 
 export function DeleteAction() {
 	return (
-		<div className="flex items-center gap-1 ml-0.5">
-			<TrashIcon className="size-4! text-destructive" />
+		<div className="flex items-center gap-1">
+			{/* <TrashIcon className="size-4! text-destructive" /> */}
 			<span className="text-destructive text-xs">Delete</span>
 		</div>
 	);

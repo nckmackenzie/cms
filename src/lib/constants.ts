@@ -120,7 +120,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: BanknoteIcon,
 				label: "Funds Requisitions",
-				href: "/",
+				href: "/finance/fund-requisitions",
 				activeOptions: { exact: false },
 			},
 			{

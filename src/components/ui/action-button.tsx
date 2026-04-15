@@ -21,12 +21,14 @@ export function ActionButton({
 	requireAreYouSure = false,
 	areYouSureDescription = "This action cannot be undone.",
 	isDestructive = true,
+	onSuccess,
 	...props
 }: ComponentProps<typeof Button> & {
 	action: () => Promise<Result<undefined>>;
 	requireAreYouSure?: boolean;
 	isDestructive?: boolean;
 	areYouSureDescription?: ReactNode;
+	onSuccess?: () => void;
 }) {
 	const [isLoading, startTransition] = useTransition();
 
@@ -39,6 +41,7 @@ export function ActionButton({
 					return;
 				}
 				toast.success("Action completed successfully!");
+				onSuccess?.();
 			} catch (error) {
 				toast.error("Error", {
 					description:

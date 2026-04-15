@@ -1,0 +1,2 @@
+ALTER TABLE "fund_requisitions" ADD COLUMN "church_category_id" integer;--> statement-breakpoint
+ALTER TABLE "fund_requisitions" ADD CONSTRAINT "fund_requisitions_church_category_id_church_requisition_categories_id_fk" FOREIGN KEY ("church_category_id") REFERENCES "public"."church_requisition_categories"("id") ON DELETE no action ON UPDATE no action;

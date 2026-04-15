@@ -4,6 +4,35 @@ import { db } from "#/db";
 import { districts } from "#/db/schema";
 import { authMiddleware } from "#/middleware/auth";
 
+export const getDistrictId = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator((data: { publicId: string }) => data)
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			const { publicId } = data;
+			const [result] = await db
+				.select({ id: districts.id })
+				.from(districts)
+				.where(
+					and(
+						eq(districts.publicId, publicId),
+						isNull(districts.deletedAt),
+						eq(districts.congregationId, congregationId),
+					),
+				)
+				.limit(1);
+			if (!result) {
+				throw new Error("District not found");
+			}
+			return result.id;
+		},
+	);
+
 export const getCongregationDistricts = createServerFn()
 	.middleware([authMiddleware])
 	.handler(
@@ -14,7 +43,7 @@ export const getCongregationDistricts = createServerFn()
 		}) => {
 			return db
 				.select({
-					value: districts.id,
+					value: districts.publicId,
 					label: districts.districtName,
 				})
 				.from(districts)

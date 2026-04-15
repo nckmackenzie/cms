@@ -1,5 +1,5 @@
 import type { VariantProps } from "class-variance-authority";
-import { SaveIcon, XIcon } from "lucide-react";
+import { SaveIcon, Undo2Icon } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Button, type buttonVariants } from "#/components/ui/button";
 import { ComboBox } from "#/components/ui/custom-select";
@@ -25,6 +25,7 @@ import { PasswordInput } from "./ui/password-input";
 type UniversalFieldProps = {
 	fieldClassName?: string;
 	helperText?: string;
+	required?: boolean;
 };
 
 type SubmitButtonProps = {
@@ -65,8 +66,21 @@ export function SubmitButton({
 			{(isSubmitting) => (
 				<Field
 					orientation={isMobile ? "vertical" : orientation || "horizontal"}
-					className={fieldClassName}
+					className={cn("gap-4", fieldClassName)}
 				>
+					{withReset && (
+						<Button
+							type="button"
+							disabled={isSubmitting}
+							variant="ghost"
+							size={buttonSize ?? "xl"}
+							onClick={onReset ? () => onReset() : () => form.reset()}
+							className="text-muted-foreground"
+						>
+							{cancelIcon || <Undo2Icon />}
+							{cancelButtonText || "Cancel"}
+						</Button>
+					)}
 					<Button
 						type="submit"
 						className={cn("flex", className)}
@@ -81,18 +95,6 @@ export function SubmitButton({
 							{buttonText}
 						</LoadingSwap>
 					</Button>
-					{withReset && (
-						<Button
-							type="button"
-							disabled={isSubmitting}
-							variant="outline"
-							size={buttonSize ?? "xl"}
-							onClick={onReset ? () => onReset() : () => form.reset()}
-						>
-							{cancelIcon || <XIcon />}
-							{cancelButtonText || "Cancel"}
-						</Button>
-					)}
 				</Field>
 			)}
 		</form.Subscribe>
@@ -107,6 +109,7 @@ type TextFieldProps = {
 export function TextField({
 	label,
 	fieldClassName,
+	required,
 	helperText,
 	...props
 }: TextFieldProps) {
@@ -123,7 +126,11 @@ export function TextField({
 
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
-			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+			{label && (
+				<FieldLabel htmlFor={field.name}>
+					{label} {required && <span className="text-destructive">*</span>}
+				</FieldLabel>
+			)}
 			<Input
 				value={field.state.value as string}
 				onBlur={field.handleBlur}
@@ -183,6 +190,7 @@ export function TextArea({
 	label,
 	fieldClassName,
 	helperText,
+	required,
 	...props
 }: TextAreaProps) {
 	const field = useFieldContext<string>();
@@ -190,7 +198,9 @@ export function TextArea({
 
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
-			<FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+			<FieldLabel htmlFor={field.name}>
+				{label} {required && <span className="text-destructive">*</span>}
+			</FieldLabel>
 			<Textarea
 				value={field.state.value}
 				onBlur={field.handleBlur}
@@ -224,6 +234,7 @@ export function Select({
 	helperText,
 	className,
 	disabled,
+	required,
 	isNumber,
 }: SelectProps) {
 	const field = useFieldContext<string | number | null | undefined>();
@@ -231,7 +242,11 @@ export function Select({
 
 	return (
 		<Field data-invalid={isInvalid} className={fieldClassName}>
-			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+			{label && (
+				<FieldLabel htmlFor={field.name}>
+					{label} {required && <span className="text-destructive">*</span>}
+				</FieldLabel>
+			)}
 			<ShadcnSelect.Select
 				onValueChange={(e) =>
 					field.handleChange(isNumber ? (e ? Number(e) : null) : e)
@@ -313,6 +328,7 @@ export function FormCheckbox({
 	fieldClassName,
 	label,
 	helperText,
+	required,
 }: {
 	fieldClassName?: string;
 	label?: string;
@@ -336,7 +352,9 @@ export function FormCheckbox({
 			/>
 
 			<FieldContent>
-				<FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+				<FieldLabel htmlFor={field.name}>
+					{label} {required && <span className="text-destructive">*</span>}
+				</FieldLabel>
 				{helperText && <FieldDescription>{helperText}</FieldDescription>}
 				{isInvalid && <FieldError errors={field.state.meta.errors} />}
 			</FieldContent>
@@ -360,6 +378,7 @@ export function ComboboxField({
 	className,
 	items,
 	addNew,
+	required,
 	disabled,
 }: ComboboxFieldProps) {
 	const field = useFieldContext<string>();
@@ -367,7 +386,12 @@ export function ComboboxField({
 
 	return (
 		<Field data-invalid={isInvalid} className={className}>
-			{label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
+			{label && (
+				<FieldLabel htmlFor={field.name}>
+					{label}
+					{required && <span className="text-destructive">*</span>}
+				</FieldLabel>
+			)}
 			<ComboBox
 				value={field.state.value}
 				onChange={(value) => field.handleChange(value)}

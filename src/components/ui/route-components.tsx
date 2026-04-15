@@ -107,6 +107,7 @@ let injected = false;
 function Keyframes() {
 	if (injected) return null;
 	injected = true;
+
 	// biome-ignore lint/security/noDangerouslySetInnerHtml: <>
 	return <style dangerouslySetInnerHTML={{ __html: KEYFRAMES }} />;
 }
@@ -290,7 +291,7 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 				: {
 						Icon: ServerCrash,
 						iconClass: "text-destructive",
-						wrapClass: "bg-danger border-danger/40",
+						wrapClass: "bg-error border-error/40",
 						accentClass: "bg-destructive/60",
 						shake: true,
 						title: "Something went wrong",

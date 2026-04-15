@@ -1,8 +1,8 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "#/db";
-import { users } from "#/db/schema";
+import { congregations, users } from "#/db/schema";
 import {
 	changePasswordFormSchema,
 	forgotPasswordFormSchema,
@@ -212,7 +212,21 @@ async function registerFailedLoginAttempt(user: LoginChallengeUser) {
 export const loginFn = createServerFn({ method: "POST" })
 	.inputValidator(loginFormSchema)
 	.handler(async ({ data }) => {
-		const congregationId = Number(data.congregationId);
+		// const congregationId = Number(data.congregationId);
+		const congregation = await db.query.congregations.findFirst({
+			columns: { id: true },
+			where: and(
+				eq(congregations.publicId, data.congregationId),
+				isNull(congregations.deletedAt),
+			),
+		});
+		if (!congregation) {
+			return failure({
+				message: "Invalid congregation",
+				type: "AuthenticationError",
+			});
+		}
+		const congregationId = congregation.id;
 		const user = await findUserByUsernameAndCongregation(
 			data.username,
 			congregationId,

@@ -1,0 +1,1 @@
+ALTER TABLE "fund_requisitions" ALTER COLUMN "payment_method" SET DATA TYPE "public"."payment_method_enum" USING "payment_method"::text::"public"."payment_method_enum";

@@ -14,7 +14,7 @@ export const getCongregationServices = createServerFn()
 		}) => {
 			return db
 				.select({
-					value: services.id,
+					value: services.publicId,
 					label: services.name,
 				})
 				.from(services)

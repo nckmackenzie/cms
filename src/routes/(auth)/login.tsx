@@ -11,12 +11,12 @@ export const getCongregations = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return db.query.congregations
 			.findMany({
-				columns: { id: true, congregationName: true },
+				columns: { publicId: true, congregationName: true },
 				orderBy: asc(congregations.congregationName),
 			})
 			.then((d) =>
 				d.map((c) => ({
-					value: c.id.toString(),
+					value: c.publicId,
 					label: toTitleCase(c.congregationName),
 				})),
 			);

@@ -1,0 +1,1 @@
+ALTER TABLE "fund_requisitions" ALTER COLUMN "amount_approved" DROP NOT NULL;
