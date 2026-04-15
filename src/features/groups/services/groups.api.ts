@@ -23,7 +23,6 @@ export const getGroupIdFn = createServerFn()
 						eq(groups.publicId, publicId),
 						isNull(groups.deletedAt),
 						eq(groups.congregationId, congregationId),
-						eq(groups.active, true),
 					),
 				)
 				.limit(1);
