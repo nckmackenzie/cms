@@ -178,6 +178,39 @@ function SelectScrollDownButton({
 	);
 }
 
+type CustomSelectProps = {
+	options: Array<{ value: string; label: string }>;
+	onChange: (value: string) => void;
+	className?: string;
+	placeholder?: string;
+	value?: string;
+};
+
+function CustomSelect({
+	options,
+	onChange,
+	className,
+	placeholder,
+	value,
+}: CustomSelectProps) {
+	return (
+		<Select onValueChange={onChange} value={value}>
+			<SelectTrigger
+				className={cn("w-full h-10! rounded-md! bg-card", className)}
+			>
+				<SelectValue placeholder={placeholder || "select option..."} />
+			</SelectTrigger>
+			<SelectContent>
+				{options.map((option) => (
+					<SelectItem key={option.value} value={option.value}>
+						{option.label}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+}
+
 export {
 	Select,
 	SelectContent,
@@ -189,4 +222,5 @@ export {
 	SelectSeparator,
 	SelectTrigger,
 	SelectValue,
+	CustomSelect,
 };
