@@ -142,6 +142,7 @@ function EmptyState({
 						<Button
 							size={action.size ?? "lg"}
 							variant={action.variant ?? "default"}
+							onClick={action.onClick}
 						>
 							{action.icon && <action.icon size={14} strokeWidth={2.2} />}
 							{action.label}
@@ -151,6 +152,7 @@ function EmptyState({
 						<Button
 							size={secondaryAction.size ?? "lg"}
 							variant={secondaryAction.variant ?? "default"}
+							onClick={secondaryAction.onClick}
 						>
 							{secondaryAction.icon && (
 								<secondaryAction.icon size={14} strokeWidth={2.2} />
