@@ -265,6 +265,31 @@ export const requisitionNoFn = createServerFn()
 		},
 	);
 
+export const getRequisitionByPublicId = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(stringSchema("Provide Requisition"))
+	.handler(
+		async ({
+			data,
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			const requisition = await db.query.fundRequisitions.findFirst({
+				where: and(
+					eq(fundRequisitions.publicId, data),
+					isNull(fundRequisitions.deletedAt),
+					eq(fundRequisitions.congregationId, congregationId),
+				),
+				columns: { deletedAt: false, approvedBy: false },
+			});
+
+			if (!requisition) throw Error("Requisition not found");
+
+			return requisition;
+		},
+	);
+
 export const getRequisitions = createServerFn()
 	.middleware([authMiddleware])
 	.inputValidator(fundsRequisitionValidateSearch)
