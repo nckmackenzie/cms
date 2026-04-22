@@ -44,7 +44,7 @@ export const createJournalEntry = async ({
 
 type DeleteJournalEntryParams = {
 	id?: number;
-	source?: string;
+	source?: Source;
 	sourceId?: string;
 	tx?: Transaction;
 };
