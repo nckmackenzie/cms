@@ -31,6 +31,7 @@ export const expenseFormSchema = z
 		reference: stringSchema("Reference is required"),
 		requisitionId: z.string().nullish(),
 		sourceAccountId: z.string().nullish(),
+		paidFromPettyCash: z.boolean(),
 		lines: z
 			.array(
 				z.object({

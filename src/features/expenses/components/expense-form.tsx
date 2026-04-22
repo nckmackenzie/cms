@@ -85,6 +85,7 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 				groupId: null,
 				districtId: null,
 				lines: [initialLineValues],
+				paidFromPettyCash: false,
 			} as ExpenseFormValues),
 		validators: {
 			onSubmit: expenseFormSchema,
@@ -334,6 +335,11 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 							/>
 						)}
 					</form.AppField>
+					{paymentMethod === "cash" && (
+						<form.AppField name="paidFromPettyCash">
+							{(field) => <field.Switch label="Paid from petty cash" />}
+						</form.AppField>
+					)}
 				</FieldGroup>
 				<section className="rounded-md bg-card p-4 shadow-sm">
 					<form.Field name="lines" mode="array">

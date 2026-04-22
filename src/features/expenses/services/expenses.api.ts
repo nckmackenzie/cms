@@ -45,13 +45,21 @@ import {
 	areJournalValuesBalanced,
 	createJournalEntry,
 	deleteJournalEntry,
+	type Transaction,
 } from "#/lib/journal";
 import { failure, success } from "#/lib/result";
 import { stringSchema } from "#/lib/schemas";
 import { authMiddleware } from "#/middleware/auth";
 
 type ExpenseType = InferSelectModel<typeof expensesHeader>["expenseType"];
-type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+// type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+class ExpenseValidationError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ExpenseValidationError";
+	}
+}
 
 const getExpenseByStatus = async ({
 	id,
@@ -204,16 +212,15 @@ const getAvailableRequisitions = async ({
 };
 
 const getRequisitionExpenseTotal = async ({
-	connection,
+	connection = db,
 	congregationId,
 	requisitionId,
 }: {
-	connection?: DbTransaction;
+	connection?: typeof db | Transaction;
 	congregationId: number;
 	requisitionId: number;
 }) => {
-	const dbConnection = connection ?? db;
-	const [expenseTotal] = await dbConnection
+	const [expenseTotal] = await connection
 		.select({
 			amount: sql<number>`COALESCE(sum(${expensesDetail.amount}), 0)`.as(
 				"amount",
@@ -233,100 +240,7 @@ const getRequisitionExpenseTotal = async ({
 };
 
 const getExpenseLinesTotal = (lines: ExpenseFormValues["lines"]) => {
-	return lines.reduce((acc, line) => acc + toNumber(line.amount), 0);
-};
-
-const validateResolvedRequisition = async ({
-	connection,
-	congregationId,
-	expenseType,
-	requisitionId,
-	requisition,
-	groupId,
-	districtId,
-	lines,
-	currentExpense,
-}: {
-	connection: DbTransaction;
-	congregationId: number;
-	expenseType: ExpenseType;
-	requisitionId?: string | null;
-	requisition: Awaited<ReturnType<typeof getRequisitionByPublicId>> | null;
-	groupId?: number | null;
-	districtId?: number | null;
-	lines: ExpenseFormValues["lines"];
-	currentExpense?: Awaited<ReturnType<typeof getExpenseByStatus>> | null;
-}) => {
-	if (expenseType === "church") {
-		if (requisitionId || requisition) {
-			throw new Error("Church expenses cannot use a requisition");
-		}
-		return;
-	}
-
-	if (!requisitionId) {
-		if (requisition) {
-			throw new Error("Unexpected requisition resolved");
-		}
-		return;
-	}
-
-	if (!requisition) {
-		throw new Error("Requisition not found");
-	}
-
-	if (requisition.publicId !== requisitionId) {
-		throw new Error(
-			"Resolved requisition does not match the selected requisition",
-		);
-	}
-
-	if (requisition.status !== "approved") {
-		throw new Error("Only approved requisitions can be used for expenses");
-	}
-
-	if (requisition.requestType !== expenseType) {
-		throw new Error(
-			"Requisition type does not match the selected expense type",
-		);
-	}
-
-	if (
-		expenseType === "group" &&
-		(!groupId || requisition.groupId !== groupId)
-	) {
-		throw new Error("Requisition does not belong to the selected group");
-	}
-
-	if (
-		expenseType === "district" &&
-		(!districtId || requisition.districtId !== districtId)
-	) {
-		throw new Error("Requisition does not belong to the selected district");
-	}
-
-	if (requisition.amountApproved === null) {
-		throw new Error("Approved requisition is missing an approved amount");
-	}
-
-	const usedAmount = await getRequisitionExpenseTotal({
-		connection,
-		congregationId,
-		requisitionId: requisition.id,
-	});
-	const existingExpenseAmount =
-		currentExpense?.requisitionId === requisition.id
-			? currentExpense.details.reduce(
-					(acc, detail) => acc + toNumber(detail.amount),
-					0,
-				)
-			: 0;
-	const remainingAmount =
-		toNumber(requisition.amountApproved) - usedAmount + existingExpenseAmount;
-
-	if (remainingAmount < getExpenseLinesTotal(lines)) {
-		throw new Error("Expense amount exceeds the requisition remaining budget");
-	}
+	return lines.reduce((total, line) => total + toNumber(line.amount), 0);
 };
 
 const getExpenseRequisitionOptionData = async ({
@@ -338,7 +252,6 @@ const getExpenseRequisitionOptionData = async ({
 }) => {
 	const requisition = await getRequisitionByPublicId({ data: requisitionId });
 	const expenseTotal = await getRequisitionExpenseTotal({
-		connection: undefined,
 		congregationId,
 		requisitionId: requisition.id,
 	});
@@ -396,6 +309,103 @@ const resolveExpenseReferences = async ({
 	};
 };
 
+type ResolvedExpenseReferences = Awaited<
+	ReturnType<typeof resolveExpenseReferences>
+>;
+
+const validateResolvedRequisition = async ({
+	tx,
+	congregationId,
+	values,
+	resolved,
+	currentExpense,
+}: {
+	tx: Transaction;
+	congregationId: number;
+	values: Pick<
+		ExpenseFormValues,
+		"expenseType" | "requisitionId" | "groupId" | "districtId" | "lines"
+	>;
+	resolved: ResolvedExpenseReferences;
+	currentExpense?: Awaited<ReturnType<typeof getExpenseByStatus>>;
+}) => {
+	const { expenseType, requisitionId, lines } = values;
+	const { requisition, group, district } = resolved;
+
+	if (expenseType === "church") {
+		if (requisitionId) {
+			throw new ExpenseValidationError(
+				"Church expenses do not use requisitions",
+			);
+		}
+		return;
+	}
+
+	if (!requisitionId) return;
+
+	if (!requisition || requisition.publicId !== requisitionId) {
+		throw new ExpenseValidationError("Selected requisition is invalid");
+	}
+
+	if (requisition.congregationId !== congregationId) {
+		throw new ExpenseValidationError(
+			"Selected requisition does not belong to this congregation",
+		);
+	}
+
+	if (requisition.status !== "approved") {
+		throw new ExpenseValidationError("Selected requisition is not approved");
+	}
+
+	if (requisition.requestType !== expenseType) {
+		throw new ExpenseValidationError(
+			"Selected requisition does not match the selected expense type",
+		);
+	}
+
+	if (expenseType === "group" && requisition.groupId !== group) {
+		throw new ExpenseValidationError(
+			"Selected requisition does not belong to the chosen group",
+		);
+	}
+
+	if (expenseType === "district" && requisition.districtId !== district) {
+		throw new ExpenseValidationError(
+			"Selected requisition does not belong to the chosen district",
+		);
+	}
+
+	const approvedAmount = Number(requisition.amountApproved ?? 0);
+	if (approvedAmount <= 0) {
+		throw new ExpenseValidationError(
+			"Selected requisition does not have an approved amount",
+		);
+	}
+
+	const submittedTotal = getExpenseLinesTotal(lines);
+	const usedAmount = await getRequisitionExpenseTotal({
+		connection: tx,
+		congregationId,
+		requisitionId: requisition.id,
+	});
+
+	const currentExpenseAmount =
+		currentExpense && currentExpense.requisitionId === requisition.id
+			? currentExpense.details.reduce(
+					(total, detail) => total + toNumber(detail.amount),
+					0,
+				)
+			: 0;
+
+	const availableAmount = approvedAmount - usedAmount + currentExpenseAmount;
+
+	if (availableAmount < submittedTotal) {
+		throw new ExpenseValidationError(
+			"Selected requisition has insufficient remaining balance",
+		);
+	}
+};
+
 const buildExpenseDetails = async (
 	lines: ExpenseFormValues["lines"],
 	expenseId: number,
@@ -446,6 +456,25 @@ const createExpense = async (
 
 	try {
 		await db.transaction(async (tx) => {
+			await validateResolvedRequisition({
+				tx,
+				congregationId,
+				values: {
+					expenseType,
+					requisitionId,
+					groupId,
+					districtId,
+					lines,
+				},
+				resolved: {
+					bank,
+					requisition,
+					group,
+					district,
+					sourceAccount,
+				},
+			});
+
 			const [header] = await tx
 				.insert(expensesHeader)
 				.values({
@@ -460,6 +489,8 @@ const createExpense = async (
 					districtId: expenseType === "district" ? district : null,
 					creditingAccountId: paymentMethod === "cash" ? sourceAccount : null,
 					status: "pending",
+					paidFromPettyCash:
+						paymentMethod === "cash" ? values.paidFromPettyCash : false,
 					congregationId,
 				})
 				.returning({ id: expensesHeader.id });
@@ -467,17 +498,6 @@ const createExpense = async (
 			if (!header) {
 				throw new Error("Failed to create expense header");
 			}
-
-			await validateResolvedRequisition({
-				connection: tx,
-				congregationId,
-				expenseType,
-				requisitionId,
-				requisition,
-				groupId: group,
-				districtId: district,
-				lines,
-			});
 
 			const detail = await buildExpenseDetails(lines, header.id);
 
@@ -487,6 +507,12 @@ const createExpense = async (
 		return success(undefined);
 	} catch (error) {
 		console.error(error);
+		if (error instanceof ExpenseValidationError) {
+			return failure({
+				type: "ValidationError",
+				message: error.message,
+			});
+		}
 		return failure({
 			type: "ApplicationError",
 			message: "Failed to create expense",
@@ -535,6 +561,26 @@ const updateExpense = async (
 
 	try {
 		await db.transaction(async (tx) => {
+			await validateResolvedRequisition({
+				tx,
+				congregationId,
+				values: {
+					expenseType,
+					requisitionId,
+					groupId,
+					districtId,
+					lines,
+				},
+				resolved: {
+					bank,
+					requisition,
+					group,
+					district,
+					sourceAccount,
+				},
+				currentExpense: expense,
+			});
+
 			const [header] = await tx
 				.update(expensesHeader)
 				.set({
@@ -548,6 +594,8 @@ const updateExpense = async (
 					districtId: expenseType === "district" ? district : null,
 					creditingAccountId: paymentMethod === "cash" ? sourceAccount : null,
 					status: "pending",
+					paidFromPettyCash:
+						paymentMethod === "cash" ? values.paidFromPettyCash : false,
 					congregationId,
 				})
 				.where(eq(expensesHeader.id, expense.id))
@@ -556,18 +604,6 @@ const updateExpense = async (
 			if (!header) {
 				throw new Error("Failed to update expense header");
 			}
-
-			await validateResolvedRequisition({
-				connection: tx,
-				congregationId,
-				expenseType,
-				requisitionId,
-				requisition,
-				groupId: group,
-				districtId: district,
-				lines,
-				currentExpense: expense,
-			});
 
 			await tx
 				.delete(expensesDetail)
@@ -581,6 +617,12 @@ const updateExpense = async (
 		return success(undefined);
 	} catch (error) {
 		console.error(error);
+		if (error instanceof ExpenseValidationError) {
+			return failure({
+				type: "ValidationError",
+				message: error.message,
+			});
+		}
 		return failure({
 			type: "ApplicationError",
 			message: "Failed to create expense",
@@ -761,6 +803,7 @@ export const getExpenseByPublicId = createServerFn()
 				requisitionId: expense.requisition?.publicId ?? null,
 				groupId: expense.group?.publicId ?? null,
 				districtId: expense.district?.publicId ?? null,
+				paidFromPettyCash: expense.paidFromPettyCash,
 				lines: expense.details.map((detail) => ({
 					id: detail.id,
 					accountId: detail.account.publicId,
@@ -908,6 +951,19 @@ export const approveExpense = createServerFn({ method: "POST" })
 							),
 						);
 
+					if (expense.paidFromPettyCash) {
+						await tx.insert(pettyCash).values({
+							transactionDate: expense.expenseDate,
+							dc: "credit",
+							narration,
+							reference: expense.reference ?? narration,
+							source: "Expenses",
+							sourceId: expense.id.toString(),
+							congregationId,
+							amount: expenseAmount.toString(),
+						});
+					}
+
 					await createJournalEntry({
 						source: { source: "Expenses", sourceId: expense.id.toString() },
 						transactionDate: expense.expenseDate,
@@ -981,6 +1037,16 @@ export const unapproveExpense = createServerFn({ method: "POST" })
 						sourceId: expense.id.toString(),
 						tx,
 					});
+
+					await tx
+						.delete(pettyCash)
+						.where(
+							and(
+								eq(pettyCash.congregationId, congregationId),
+								eq(pettyCash.sourceId, expense.id.toString()),
+								eq(pettyCash.source, "Expenses"),
+							),
+						);
 
 					await deleteBankingEntry({
 						source: "Expenses",

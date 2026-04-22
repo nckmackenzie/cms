@@ -1,6 +1,6 @@
 {
-  "id": "79ca8d3e-f54a-4c76-bf8f-b34f0216dbc8",
-  "prevId": "d003b6b5-b65e-4761-96c2-417598ebc567",
+  "id": "37186a31-b989-42b7-8c60-b0d061796764",
+  "prevId": "4cc0e7ba-d4bd-40cf-9403-b32cd0d1df4a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -610,19 +610,19 @@
           "name": "expense_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "account_id": {
           "name": "account_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "description": {
           "name": "description",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "amount": {
           "name": "amount",
@@ -799,7 +799,14 @@
           "name": "congregation_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "paid_from_petty_cash": {
+          "name": "paid_from_petty_cash",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
