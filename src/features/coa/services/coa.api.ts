@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
-import { ACCOUNT_TYPES, ledgerAccounts } from "#/db/schema";
+import { ACCOUNT_TYPES, journalEntries, ledgerAccounts } from "#/db/schema";
 import {
 	accountsFormSchema,
 	coaValidateSearch,
 } from "#/features/coa/utils/schemas";
+import { SOURCES } from "#/lib/constants";
 import { failure, success } from "#/lib/result";
 import { toTitleCase } from "#/lib/utils";
 import { authMiddleware } from "#/middleware/auth";
@@ -316,3 +317,57 @@ export const getAccountByPublicId = createServerFn({ method: "GET" })
 		}
 		return account.id;
 	});
+
+export const getTransactionJournal = createServerFn()
+	.middleware([authMiddleware])
+	.inputValidator(
+		z.object({
+			source: z.enum(SOURCES),
+			sourceId: z.string(),
+		}),
+	)
+	.handler(
+		async ({
+			data: { source, sourceId },
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			const data = await db
+				.select({
+					id: journalEntries.publicId,
+					date: journalEntries.transactionDate,
+					accountName: ledgerAccounts.name,
+					accountType: ledgerAccounts.accountType,
+					debit: sql<number>`CASE WHEN ${journalEntries.dc} = 'debit' THEN ${journalEntries.amount} ELSE 0 END`,
+					credit: sql<number>`CASE WHEN ${journalEntries.dc} = 'credit' THEN ${journalEntries.amount} ELSE 0 END`,
+					narration: journalEntries.memo,
+				})
+				.from(journalEntries)
+				.innerJoin(
+					ledgerAccounts,
+					eq(journalEntries.accountId, ledgerAccounts.id),
+				)
+				.where(
+					and(
+						eq(journalEntries.source, source),
+						eq(journalEntries.sourceId, sourceId),
+						eq(journalEntries.congregationId, congregationId),
+						isNull(ledgerAccounts.deletedAt),
+					),
+				)
+				.orderBy(desc(journalEntries.dc), asc(journalEntries.lineNumber));
+
+			return {
+				date: data[0].date,
+				entries: data.map((d) => ({
+					id: d.id,
+					accountName: d.accountName,
+					accountType: d.accountType,
+					debit: d.debit,
+					credit: d.credit,
+					narration: d.narration ?? undefined,
+				})),
+			};
+		},
+	);

@@ -84,7 +84,15 @@ export const deleteJournalEntry = async ({
 };
 
 export const areJournalValuesBalanced = (
-	lines: Omit<typeof journalEntries.$inferInsert, "id" | "deletedAt">[],
+	lines: Omit<
+		typeof journalEntries.$inferInsert,
+		| "id"
+		| "deletedAt"
+		| "source"
+		| "sourceId"
+		| "congregationId"
+		| "transactionDate"
+	>[],
 ) => {
 	let debitTotal = 0;
 	let creditTotal = 0;

@@ -126,7 +126,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: BanknoteArrowDownIcon,
 				label: "Expenses",
-				href: "/",
+				href: "/finance/expenses",
 				activeOptions: { exact: false },
 			},
 			{
