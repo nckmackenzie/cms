@@ -330,8 +330,6 @@ export const getRequisitions = createServerFn()
 			}
 
 			const financialYear = await getFinancialYearByDate();
-			if (!financialYear)
-				throw new Error("No financial year found for current date!");
 
 			return await db
 				.select({
@@ -524,9 +522,7 @@ export const approveRequisition = createServerFn({ method: "POST" })
 					accountId: debitingAccountId,
 					amount: data.amountApproved.toString(),
 					dc: "debit" as DebitCredit,
-					congregationId,
 					lineNumber: 1,
-					transactionDate: data.paymentDate,
 					memo: normalizeText(narration),
 				},
 				{
@@ -534,9 +530,7 @@ export const approveRequisition = createServerFn({ method: "POST" })
 						data.paymentMethod === "cash" ? creditingAccountId! : bankId!,
 					amount: data.amountApproved.toString(),
 					dc: "credit" as DebitCredit,
-					congregationId,
 					lineNumber: 2,
-					transactionDate: data.paymentDate,
 					memo: normalizeText(narration),
 				},
 			];
@@ -577,6 +571,8 @@ export const approveRequisition = createServerFn({ method: "POST" })
 					}
 
 					await createJournalEntry({
+						congregationId,
+						transactionDate: data.paymentDate,
 						lines: journalLines,
 						source: {
 							source: "Group Fund Approval",

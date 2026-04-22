@@ -48,7 +48,6 @@ export function BackLink({
 				"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
 				className,
 			)}
-			asChild
 			onClick={() => router.history.back()}
 		>
 			<ArrowLeftIcon className="arrow shrink-0" />

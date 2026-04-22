@@ -81,6 +81,9 @@ export const fundRequisitionTypeEnum = pgEnum(
 	"fund_requisition_type_enum",
 	FUND_REQUISITION_TYPE,
 );
+export const EXPENSE_TYPES = ["church", "group", "district"] as const;
+export type ExpenseType = (typeof EXPENSE_TYPES)[number];
+export const expenseTypeEnum = pgEnum("expense_type_enum", EXPENSE_TYPES);
 
 export const congregations = pgTable(
 	"congregations",
@@ -356,6 +359,63 @@ export const journalEntries = pgTable(
 	],
 );
 
+export const expensesHeader = pgTable(
+	"expenses_header",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		expenseDate: date("expense_date").notNull(),
+		voucherNo: integer("voucher_no").notNull(),
+		expenseType: expenseTypeEnum("expense_type").notNull(),
+		groupId: integer("group_id").references(() => groups.id),
+		districtId: integer("district_id").references(() => districts.id),
+		paymentMethod: paymentMethodEnum("payment_method").notNull(),
+		reference: varchar("reference"),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		creditingAccountId: integer("crediting_account_id").references(
+			() => ledgerAccounts.id,
+		),
+		requisitionId: integer("requisition_id").references(
+			() => fundRequisitions.id,
+		),
+		status: fundRequisitionStatusEnum("status").notNull().default("pending"),
+		congregationId: integer("congregation_id")
+			.references(() => congregations.id)
+			.notNull(),
+		createdAt,
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("expenses_header_expense_date_idx").on(table.expenseDate),
+		index("expenses_header_voucher_no_idx").on(table.voucherNo),
+		index("expenses_header_expense_type_idx").on(table.expenseType),
+		index("expenses_header_group_id_idx").on(table.groupId),
+		index("expenses_header_district_id_idx").on(table.districtId),
+		index("expenses_header_reference_idx").on(table.reference),
+		index("expenses_header_status_idx").on(table.status),
+		index("expenses_header_congregation_id_idx").on(table.congregationId),
+	],
+);
+
+export const expensesDetail = pgTable(
+	"expenses_detail",
+	{
+		id: varchar("id").primaryKey().notNull(),
+		expenseId: integer("expense_id")
+			.notNull()
+			.references(() => expensesHeader.id),
+		accountId: integer("account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		description: varchar("description", { length: 255 }),
+		amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+	},
+	(table) => [
+		index("expenses_detail_expense_id_idx").on(table.expenseId),
+		index("expenses_detail_account_id_idx").on(table.accountId),
+	],
+);
+
 export const users = pgTable(
 	"users",
 	{
@@ -428,6 +488,34 @@ export const bankPostings = pgTable(
 		index("bank_postings_bank_id_idx").on(table.bankId),
 		index("bank_postings_transaction_date_idx").on(table.transactionDate),
 		index("bank_postings_reference_idx").on(table.reference),
+	],
+);
+
+export const pettyCash = pgTable(
+	"petty_cash",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		receiptNo: integer("receipt_no"),
+		transactionDate: date("transaction_date").notNull(),
+		amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+		dc: lineDcEnum("dc").notNull(),
+		isReceipt: boolean("is_receipt").notNull().default(false),
+		bankId: integer("bank_id").references(() => ledgerAccounts.id),
+		reference: varchar("reference", { length: 255 }),
+		narration: varchar("narration", { length: 255 }),
+		source: varchar("source_type", { length: 50 }),
+		sourceId: varchar("source_id", { length: 50 }),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("petty_cash_transaction_date_idx").on(table.transactionDate),
+		index("petty_cash_receipt_no_idx").on(table.receiptNo),
+		index("petty_cash_reference_idx").on(table.reference),
+		index("petty_cash_congregation_id_idx").on(table.congregationId),
 	],
 );
 
@@ -570,9 +658,66 @@ export const mmfRelations = relations(mmf, ({ one }) => ({
 	}),
 }));
 
+export const pettyCashRelations = relations(pettyCash, ({ one }) => ({
+	bank: one(ledgerAccounts, {
+		fields: [pettyCash.bankId],
+		references: [ledgerAccounts.id],
+		relationName: "petty_cash_bank",
+	}),
+	congregation: one(congregations, {
+		fields: [pettyCash.congregationId],
+		references: [congregations.id],
+	}),
+}));
+
+export const expensesHeaderRelations = relations(
+	expensesHeader,
+	({ one, many }) => ({
+		group: one(groups, {
+			fields: [expensesHeader.groupId],
+			references: [groups.id],
+		}),
+		district: one(districts, {
+			fields: [expensesHeader.districtId],
+			references: [districts.id],
+		}),
+		bank: one(ledgerAccounts, {
+			fields: [expensesHeader.bankId],
+			references: [ledgerAccounts.id],
+			relationName: "expenses_header_bank",
+		}),
+		creditingAccount: one(ledgerAccounts, {
+			fields: [expensesHeader.creditingAccountId],
+			references: [ledgerAccounts.id],
+			relationName: "expenses_header_crediting_account",
+		}),
+		requisition: one(fundRequisitions, {
+			fields: [expensesHeader.requisitionId],
+			references: [fundRequisitions.id],
+		}),
+		congregation: one(congregations, {
+			fields: [expensesHeader.congregationId],
+			references: [congregations.id],
+		}),
+		details: many(expensesDetail),
+	}),
+);
+
+export const expensesDetailRelations = relations(expensesDetail, ({ one }) => ({
+	expense: one(expensesHeader, {
+		fields: [expensesDetail.expenseId],
+		references: [expensesHeader.id],
+	}),
+	account: one(ledgerAccounts, {
+		fields: [expensesDetail.accountId],
+		references: [ledgerAccounts.id],
+		relationName: "expenses_detail_account",
+	}),
+}));
+
 export const fundRequisitionsRelations = relations(
 	fundRequisitions,
-	({ one }) => ({
+	({ one, many }) => ({
 		district: one(districts, {
 			fields: [fundRequisitions.districtId],
 			references: [districts.id],
@@ -593,6 +738,7 @@ export const fundRequisitionsRelations = relations(
 			fields: [fundRequisitions.congregationId],
 			references: [congregations.id],
 		}),
+		expensesHeaders: many(expensesHeader),
 	}),
 );
 
@@ -604,6 +750,8 @@ export const congregationsRelations = relations(congregations, ({ many }) => ({
 	services: many(services),
 	users: many(users),
 	churchRequisitionCategories: many(churchRequisitionCategories),
+	expensesHeaders: many(expensesHeader),
+	pettyCashEntries: many(pettyCash),
 }));
 
 export const rolesRelations = relations(roles, ({ many }) => ({
@@ -617,6 +765,7 @@ export const districtsRelations = relations(districts, ({ one, many }) => ({
 	}),
 	subAccounts: many(subAccounts),
 	users: many(users),
+	expensesHeaders: many(expensesHeader),
 }));
 
 export const groupsRelations = relations(groups, ({ one, many }) => ({
@@ -625,6 +774,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
 		references: [congregations.id],
 	}),
 	subAccounts: many(subAccounts),
+	expensesHeaders: many(expensesHeader),
 }));
 
 export const ledgerAccountsRelations = relations(
@@ -654,6 +804,18 @@ export const ledgerAccountsRelations = relations(
 		}),
 		subAccountsAccount: many(subAccounts, {
 			relationName: "sub_accounts_account",
+		}),
+		expensesHeaderBanks: many(expensesHeader, {
+			relationName: "expenses_header_bank",
+		}),
+		expensesHeaderCreditingAccounts: many(expensesHeader, {
+			relationName: "expenses_header_crediting_account",
+		}),
+		pettyCashBanks: many(pettyCash, {
+			relationName: "petty_cash_bank",
+		}),
+		expensesDetails: many(expensesDetail, {
+			relationName: "expenses_detail_account",
 		}),
 	}),
 );

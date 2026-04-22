@@ -43,9 +43,7 @@ const buildReceiptJournalLines = async (
 		accountId: toNumber(detail.accountId),
 		amount: detail.amount.toString(),
 		dc: "credit" as DebitCredit,
-		congregationId,
 		lineNumber: i + 1,
-		transactionDate: data.contributionDate,
 		memo: normalizeText(detail.narration),
 	}));
 
@@ -62,9 +60,7 @@ const buildReceiptJournalLines = async (
 		}),
 		amount: totalAmount.toString(),
 		dc: "debit" as DebitCredit,
-		congregationId: congregationId,
 		lineNumber: journalLines.length + 1,
-		transactionDate: data.contributionDate,
 		memo: normalizeText(data.reference),
 	});
 
@@ -119,6 +115,8 @@ const createReceipt = async (
 			);
 
 			await createJournalEntry({
+				congregationId,
+				transactionDate: data.contributionDate,
 				lines: journalLines,
 				source: { source: "Receipts", sourceId: header[0].id.toString() },
 				tx,
@@ -224,6 +222,8 @@ const updateReceipt = async (
 			});
 
 			await createJournalEntry({
+				congregationId,
+				transactionDate: data.contributionDate,
 				lines: journalLines,
 				source: { source: "Receipts", sourceId: receipt.id.toString() },
 				tx,
@@ -267,8 +267,6 @@ const updateReceipt = async (
 
 const getReceiptNo = async (congregationId: number) => {
 	const fiscalYear = await getFinancialYearByDate();
-
-	if (!fiscalYear) throw new Error("No fiscal year found");
 
 	const result = await db
 		.select({
@@ -327,7 +325,6 @@ export const getReceipts = createServerFn()
 				);
 			} else {
 				const fiscalYear = await getFinancialYearByDate();
-				if (!fiscalYear) throw new Error("No fiscal year found");
 				filters.push(
 					gte(receiptHeader.contributionDate, fiscalYear.startDate),
 					lte(receiptHeader.contributionDate, fiscalYear.endDate),

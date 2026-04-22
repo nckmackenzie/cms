@@ -14,15 +14,24 @@ type Transaction = PgTransaction<
 >;
 
 type CreateJournalEntryParams = {
+	transactionDate: string;
+	congregationId: number;
 	lines: Omit<
 		typeof journalEntries.$inferInsert,
-		"id" | "deletedAt" | "source" | "sourceId"
+		| "id"
+		| "deletedAt"
+		| "source"
+		| "sourceId"
+		| "congregationId"
+		| "transactionDate"
 	>[];
 	source: { source: Source; sourceId: string };
 	tx?: Transaction;
 };
 
 export const createJournalEntry = async ({
+	congregationId,
+	transactionDate,
 	lines,
 	source: { source, sourceId },
 	tx,
@@ -35,6 +44,8 @@ export const createJournalEntry = async ({
 				...line,
 				source,
 				sourceId,
+				transactionDate,
+				congregationId,
 			})),
 		);
 	}
@@ -44,7 +55,7 @@ export const createJournalEntry = async ({
 
 type DeleteJournalEntryParams = {
 	id?: number;
-	source?: string;
+	source?: Source;
 	sourceId?: string;
 	tx?: Transaction;
 };
@@ -73,7 +84,15 @@ export const deleteJournalEntry = async ({
 };
 
 export const areJournalValuesBalanced = (
-	lines: Omit<typeof journalEntries.$inferInsert, "id" | "deletedAt">[],
+	lines: Omit<
+		typeof journalEntries.$inferInsert,
+		| "id"
+		| "deletedAt"
+		| "source"
+		| "sourceId"
+		| "congregationId"
+		| "transactionDate"
+	>[],
 ) => {
 	let debitTotal = 0;
 	let creditTotal = 0;
