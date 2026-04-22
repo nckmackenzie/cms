@@ -7,7 +7,7 @@ import { db } from "@/db";
 import type * as schema from "@/db/schema";
 import { journalEntries, ledgerAccounts } from "@/db/schema";
 
-type Transaction = PgTransaction<
+export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
 	typeof schema,
 	ExtractTablesWithRelations<typeof schema>
