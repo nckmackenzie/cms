@@ -37,17 +37,22 @@ export function ActionButton({
 			try {
 				const data = await action();
 				if (!data.success) {
-					toast.error("Error", { description: data.error.message });
+					toast.error("Error", {
+						description: (
+							<p className="text-muted-foreground">data.error.message</p>
+						),
+					});
 					return;
 				}
 				toast.success("Action completed successfully!");
 				onSuccess?.();
 			} catch (error) {
+				const errorMessage =
+					error instanceof Error
+						? error.message
+						: "An unexpected error occurred";
 				toast.error("Error", {
-					description:
-						error instanceof Error
-							? error.message
-							: "An unexpected error occurred",
+					description: <p className="text-muted-foreground">{errorMessage}</p>,
 				});
 			}
 		});
