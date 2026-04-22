@@ -379,9 +379,9 @@ export const expensesHeader = pgTable(
 			() => fundRequisitions.id,
 		),
 		status: fundRequisitionStatusEnum("status").notNull().default("pending"),
-		congregationId: integer("congregation_id").references(
-			() => congregations.id,
-		),
+		congregationId: integer("congregation_id")
+			.references(() => congregations.id)
+			.notNull(),
 		createdAt,
 		deletedAt: timestamp("deleted_at"),
 	},

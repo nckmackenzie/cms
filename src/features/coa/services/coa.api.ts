@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
 import { ACCOUNT_TYPES, journalEntries, ledgerAccounts } from "#/db/schema";
@@ -353,10 +353,14 @@ export const getTransactionJournal = createServerFn()
 						eq(journalEntries.source, source),
 						eq(journalEntries.sourceId, sourceId),
 						eq(journalEntries.congregationId, congregationId),
-						isNull(ledgerAccounts.deletedAt),
+						isNull(journalEntries.deletedAt),
 					),
 				)
-				.orderBy(desc(journalEntries.dc), asc(journalEntries.lineNumber));
+				.orderBy(asc(journalEntries.dc), asc(journalEntries.lineNumber));
+
+			if (data.length === 0) {
+				throw new Error("Transaction journal not found");
+			}
 
 			return {
 				date: data[0].date,

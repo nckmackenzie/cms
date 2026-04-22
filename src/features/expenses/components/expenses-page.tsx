@@ -78,7 +78,7 @@ function CustomFilters({
 			/>
 			<CustomSelect
 				onChange={(val) => setFilters({ year: val })}
-				value={filters.year ?? years[0].value}
+				value={filters.year ?? years[0]?.value ?? ""}
 				options={years}
 				placeholder="Financial year..."
 			/>
@@ -103,7 +103,6 @@ function ExpensesTable({ filters, setFilters }: Props) {
 	const queryClient = useQueryClient();
 	const hasFilters = !!(
 		filters.search ||
-		filters.status ||
 		filters.status !== "all" ||
 		filters.year
 	);

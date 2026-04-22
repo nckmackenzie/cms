@@ -268,8 +268,6 @@ const updateReceipt = async (
 const getReceiptNo = async (congregationId: number) => {
 	const fiscalYear = await getFinancialYearByDate();
 
-	if (!fiscalYear) throw new Error("No fiscal year found");
-
 	const result = await db
 		.select({
 			receiptNo: sql<number>`MAX(${receiptHeader.receiptNo}::integer)`,
@@ -327,7 +325,6 @@ export const getReceipts = createServerFn()
 				);
 			} else {
 				const fiscalYear = await getFinancialYearByDate();
-				if (!fiscalYear) throw new Error("No fiscal year found");
 				filters.push(
 					gte(receiptHeader.contributionDate, fiscalYear.startDate),
 					lte(receiptHeader.contributionDate, fiscalYear.endDate),

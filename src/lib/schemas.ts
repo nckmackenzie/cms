@@ -27,7 +27,12 @@ export const dateSchema = (errorMessage: string) =>
 			error: (iss) => (!iss.input ? errorMessage : "Invalid date"),
 		})
 		.refine(
-			(val) =>
-				new Date(val).setHours(0, 0, 0, 0) <= new Date().setHours(0, 0, 0, 0),
-			{ error: "Payment date cannot be in the future" },
+			(val) => {
+				const inputDate = new Date(`${val}T00:00:00`);
+				const today = new Date();
+				inputDate.setHours(0, 0, 0, 0);
+				today.setHours(0, 0, 0, 0);
+				return inputDate <= today;
+			},
+			{ error: "Date cannot be in the future" },
 		);

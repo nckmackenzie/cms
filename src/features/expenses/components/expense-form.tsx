@@ -352,7 +352,11 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 									>
 										Add Line
 									</Button>
-									<Button type="button" variant="destructive">
+									<Button
+										type="button"
+										variant="destructive"
+										onClick={() => field.clearValues()}
+									>
 										Clear Lines
 									</Button>
 								</div>

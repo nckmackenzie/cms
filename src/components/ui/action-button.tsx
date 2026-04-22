@@ -39,7 +39,7 @@ export function ActionButton({
 				if (!data.success) {
 					toast.error("Error", {
 						description: (
-							<p className="text-muted-foreground">data.error.message</p>
+							<p className="text-muted-foreground">{data.error.message}</p>
 						),
 					});
 					return;

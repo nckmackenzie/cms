@@ -31,14 +31,16 @@ export const expenseFormSchema = z
 		reference: stringSchema("Reference is required"),
 		requisitionId: z.string().nullish(),
 		sourceAccountId: z.string().nullish(),
-		lines: z.array(
-			z.object({
-				id: z.string(),
-				accountId: stringSchema("Account is required"),
-				description: z.string().optional(),
-				amount: z.number().min(1, "Enter valid amount"),
-			}),
-		),
+		lines: z
+			.array(
+				z.object({
+					id: z.string(),
+					accountId: stringSchema("Account is required"),
+					description: z.string().optional(),
+					amount: z.number().min(1, "Enter valid amount"),
+				}),
+			)
+			.min(1, { error: "Add at least one expense line" }),
 	})
 	.superRefine(
 		(

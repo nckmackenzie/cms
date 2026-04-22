@@ -330,8 +330,6 @@ export const getRequisitions = createServerFn()
 			}
 
 			const financialYear = await getFinancialYearByDate();
-			if (!financialYear)
-				throw new Error("No financial year found for current date!");
 
 			return await db
 				.select({
