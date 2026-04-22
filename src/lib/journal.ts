@@ -14,15 +14,24 @@ type Transaction = PgTransaction<
 >;
 
 type CreateJournalEntryParams = {
+	transactionDate: string;
+	congregationId: number;
 	lines: Omit<
 		typeof journalEntries.$inferInsert,
-		"id" | "deletedAt" | "source" | "sourceId"
+		| "id"
+		| "deletedAt"
+		| "source"
+		| "sourceId"
+		| "congregationId"
+		| "transactionDate"
 	>[];
 	source: { source: Source; sourceId: string };
 	tx?: Transaction;
 };
 
 export const createJournalEntry = async ({
+	congregationId,
+	transactionDate,
 	lines,
 	source: { source, sourceId },
 	tx,
@@ -35,6 +44,8 @@ export const createJournalEntry = async ({
 				...line,
 				source,
 				sourceId,
+				transactionDate,
+				congregationId,
 			})),
 		);
 	}
