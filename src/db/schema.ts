@@ -382,6 +382,7 @@ export const expensesHeader = pgTable(
 		congregationId: integer("congregation_id")
 			.references(() => congregations.id)
 			.notNull(),
+		paidFromPettyCash: boolean("paid_from_petty_cash").notNull().default(false),
 		createdAt,
 		deletedAt: timestamp("deleted_at"),
 	},

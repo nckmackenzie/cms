@@ -334,6 +334,7 @@ export const getRequisitions = createServerFn()
 			return await db
 				.select({
 					id: fundRequisitions.publicId,
+					ref: fundRequisitions.id,
 					requisitionNo: fundRequisitions.requisitionNo,
 					requisitionDate: fundRequisitions.requisitionDate,
 					requisitionType: fundRequisitions.requestType,

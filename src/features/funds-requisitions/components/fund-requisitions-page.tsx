@@ -13,9 +13,11 @@ import { DropdownMenu, DropdownMenuItem } from "#/components/ui/dropdown-menu";
 import { PillTabs } from "#/components/ui/pill-tabs";
 import { Search } from "#/components/ui/search";
 import { FUND_REQUISITION_STATUS } from "#/db/schema";
+import { TransactionJournal } from "#/features/coa/components/journal-view";
 import { deleteFundRequisition } from "#/features/funds-requisitions/services/funds-requisition.api";
 import { fundRequisitionsQueries } from "#/features/funds-requisitions/services/queries";
 import { useFilters } from "#/hooks/use-filters";
+import { useSheet } from "#/integrations/providers/sheet-provider";
 import { currencyFormatter, dateFormat } from "#/lib/helpers";
 import { toTitleCase } from "#/lib/utils";
 
@@ -68,6 +70,7 @@ function RequisitionTable({
 }) {
 	const { filters } = useFilters(route.id);
 	const { data } = useSuspenseQuery(fundRequisitionsQueries.list(filters));
+	const { setOpen } = useSheet();
 
 	const columns: Array<ColumnDef<(typeof data)[0]>> = [
 		{
@@ -131,37 +134,59 @@ function RequisitionTable({
 			id: "actions",
 			cell: ({
 				row: {
-					original: { id, status },
+					original: { id, status, requisitionNo, ref },
 				},
 			}) => {
 				const canMakeChanges = status === "pending";
-				if (!canMakeChanges) return null;
 				return (
 					<DropdownMenu>
 						<CustomDropdownTrigger />
 						<CustomDropdownContent>
-							<DropdownMenuItem asChild>
-								<Link
-									to="/finance/fund-requisitions/$requestId/edit"
-									params={{ requestId: id }}
+							{canMakeChanges && (
+								<>
+									<DropdownMenuItem asChild>
+										<Link
+											to="/finance/fund-requisitions/$requestId/edit"
+											params={{ requestId: id }}
+										>
+											Edit
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuItem asChild>
+										<Link
+											to="/finance/fund-requisitions/$requestId/action"
+											params={{ requestId: id }}
+										>
+											Approve/Reject
+										</Link>
+									</DropdownMenuItem>
+									<DeleteActionButton
+										resourceId={id}
+										queryKey={["fund-requisitions"]}
+										deleteAction={deleteFundRequisition}
+										successMessage="Supplier deleted successfully!"
+									/>
+								</>
+							)}
+							{status === "approved" && (
+								<DropdownMenuItem
+									onSelect={() =>
+										setOpen(
+											<TransactionJournal
+												source="Group Fund Approval"
+												sourceId={ref.toString()}
+											/>,
+											{
+												className: "max-w-3xl!",
+												title: "Transaction Journal",
+												description: `Fund Requisition #${requisitionNo}`,
+											},
+										)
+									}
 								>
-									Edit
-								</Link>
-							</DropdownMenuItem>
-							<DropdownMenuItem asChild>
-								<Link
-									to="/finance/fund-requisitions/$requestId/action"
-									params={{ requestId: id }}
-								>
-									Approve/Reject
-								</Link>
-							</DropdownMenuItem>
-							<DeleteActionButton
-								resourceId={id}
-								queryKey={["fund-requisitions"]}
-								deleteAction={deleteFundRequisition}
-								successMessage="Supplier deleted successfully!"
-							/>
+									View Transaction Journal
+								</DropdownMenuItem>
+							)}
 						</CustomDropdownContent>
 					</DropdownMenu>
 				);
