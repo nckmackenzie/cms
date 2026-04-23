@@ -145,7 +145,6 @@ function RequisitionTable({
 							{canMakeChanges && (
 								<>
 									<DropdownMenuItem asChild>
-									<DropdownMenuItem asChild>
 										<Link
 											to="/finance/fund-requisitions/$requestId/edit"
 											params={{ requestId: id }}
@@ -169,7 +168,7 @@ function RequisitionTable({
 									/>
 								</>
 							)}
-							{!canMakeChanges && (
+							{status === "approved" && (
 								<DropdownMenuItem
 									onSelect={() =>
 										setOpen(
