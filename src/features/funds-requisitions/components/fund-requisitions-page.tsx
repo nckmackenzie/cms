@@ -144,7 +144,7 @@ function RequisitionTable({
 						<CustomDropdownContent>
 							{canMakeChanges && (
 								<>
-									{" "}
+									<DropdownMenuItem asChild>
 									<DropdownMenuItem asChild>
 										<Link
 											to="/finance/fund-requisitions/$requestId/edit"
