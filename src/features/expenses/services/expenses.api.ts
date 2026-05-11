@@ -81,8 +81,14 @@ const getExpenseByStatus = async ({
 	});
 };
 
-const getVoucherNo = async ({ congregationId }: { congregationId: number }) => {
-	const year = await getFinancialYearByDate();
+const getVoucherNo = async ({
+	congregationId,
+	expenseDate,
+}: {
+	congregationId: number;
+	expenseDate: string;
+}) => {
+	const year = await getFinancialYearByDate({ data: expenseDate });
 	const [{ voucherNo }] = await db
 		.select({
 			voucherNo: sql<number>`MAX(${expensesHeader.voucherNo})`,
@@ -101,13 +107,15 @@ const getVoucherNo = async ({ congregationId }: { congregationId: number }) => {
 
 export const voucherNoFn = createServerFn()
 	.middleware([authMiddleware])
+	.inputValidator(stringSchema("Date is required"))
 	.handler(
 		async ({
+			data: date,
 			context: {
 				user: { congregationId },
 			},
 		}) => {
-			return await getVoucherNo({ congregationId });
+			return await getVoucherNo({ congregationId, expenseDate: date });
 		},
 	);
 
@@ -443,7 +451,7 @@ const createExpense = async (
 
 	const [voucherNo, { bank, requisition, group, district, sourceAccount }] =
 		await Promise.all([
-			getVoucherNo({ congregationId }),
+			getVoucherNo({ expenseDate, congregationId }),
 			resolveExpenseReferences({
 				expenseType,
 				bankId,
