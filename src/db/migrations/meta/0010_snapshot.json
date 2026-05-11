@@ -1,6 +1,6 @@
 {
-  "id": "4cc0e7ba-d4bd-40cf-9403-b32cd0d1df4a",
-  "prevId": "79ca8d3e-f54a-4c76-bf8f-b34f0216dbc8",
+  "id": "bf9b0e0c-1fed-47b9-beb8-c2d65a6a2856",
+  "prevId": "4cc0e7ba-d4bd-40cf-9403-b32cd0d1df4a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -799,7 +799,14 @@
           "name": "congregation_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
+        },
+        "paid_from_petty_cash": {
+          "name": "paid_from_petty_cash",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -2449,6 +2456,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "debiting_account_id": {
+          "name": "debiting_account_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "congregation_id": {
           "name": "congregation_id",
           "type": "integer",
@@ -2531,6 +2544,19 @@
           "tableTo": "ledger_accounts",
           "columnsFrom": [
             "bank_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "petty_cash_debiting_account_id_ledger_accounts_id_fk": {
+          "name": "petty_cash_debiting_account_id_ledger_accounts_id_fk",
+          "tableFrom": "petty_cash",
+          "tableTo": "ledger_accounts",
+          "columnsFrom": [
+            "debiting_account_id"
           ],
           "columnsTo": [
             "id"

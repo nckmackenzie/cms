@@ -9,15 +9,17 @@ import { cn } from "@/lib/utils";
 export function BackLink({
 	children,
 	className,
-	variant = "outline",
+	variant = "link",
 	size,
 	href,
+	removeLeftPadding = false,
 }: {
 	children: React.ReactNode;
 	className?: string;
 	variant?: VariantProps<typeof buttonVariants>["variant"];
 	size?: VariantProps<typeof buttonVariants>["size"];
 	href?: Route["to"];
+	removeLeftPadding?: boolean;
 }) {
 	const router = useRouter();
 	if (href) {
@@ -28,7 +30,7 @@ export function BackLink({
 				type="button"
 				className={cn(
 					"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
-					className,
+					removeLeftPadding ? "pl-0" : className,
 				)}
 				asChild
 			>
@@ -46,7 +48,7 @@ export function BackLink({
 			type="button"
 			className={cn(
 				"[&_svg]:transition-transform [&:hover_svg.arrow]:-translate-x-0.5",
-				className,
+				removeLeftPadding ? "pl-0" : className,
 			)}
 			onClick={() => router.history.back()}
 		>

@@ -40,7 +40,7 @@ import {
 import { getRequisitionByPublicId } from "#/features/funds-requisitions/services/funds-requisition.api";
 import { getGroupIdFn } from "#/features/groups/services/groups.api";
 import { createBankingEntry, deleteBankingEntry } from "#/lib/banking";
-import { normalizeText, toNumber } from "#/lib/helpers";
+import { dateFormat, normalizeText, toNumber } from "#/lib/helpers";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
@@ -81,8 +81,14 @@ const getExpenseByStatus = async ({
 	});
 };
 
-const getVoucherNo = async ({ congregationId }: { congregationId: number }) => {
-	const year = await getFinancialYearByDate();
+const getVoucherNo = async ({
+	congregationId,
+	expenseDate,
+}: {
+	congregationId: number;
+	expenseDate: string;
+}) => {
+	const year = await getFinancialYearByDate({ data: expenseDate });
 	const [{ voucherNo }] = await db
 		.select({
 			voucherNo: sql<number>`MAX(${expensesHeader.voucherNo})`,
@@ -101,13 +107,18 @@ const getVoucherNo = async ({ congregationId }: { congregationId: number }) => {
 
 export const voucherNoFn = createServerFn()
 	.middleware([authMiddleware])
+	.inputValidator(z.string().optional())
 	.handler(
 		async ({
+			data: date,
 			context: {
 				user: { congregationId },
 			},
 		}) => {
-			return await getVoucherNo({ congregationId });
+			return await getVoucherNo({
+				congregationId,
+				expenseDate: date ?? dateFormat(new Date()),
+			});
 		},
 	);
 
@@ -443,7 +454,7 @@ const createExpense = async (
 
 	const [voucherNo, { bank, requisition, group, district, sourceAccount }] =
 		await Promise.all([
-			getVoucherNo({ congregationId }),
+			getVoucherNo({ expenseDate, congregationId }),
 			resolveExpenseReferences({
 				expenseType,
 				bankId,

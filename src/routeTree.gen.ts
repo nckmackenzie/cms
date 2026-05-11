@@ -19,16 +19,20 @@ import { Route as ApiFundRequisitionsGetBalanceRouteImport } from './routes/api/
 import { Route as authedFinanceDashboardRouteImport } from './routes/(authed)/finance.dashboard'
 import { Route as authedFinanceChartOfAccountsRouteImport } from './routes/(authed)/finance.chart-of-accounts'
 import { Route as authedFinanceReceiptsRouteRouteImport } from './routes/(authed)/finance.receipts.route'
+import { Route as authedFinancePettyCashRouteRouteImport } from './routes/(authed)/finance.petty-cash.route'
 import { Route as authedFinanceFundRequisitionsRouteRouteImport } from './routes/(authed)/finance.fund-requisitions.route'
 import { Route as authedFinanceExpensesRouteRouteImport } from './routes/(authed)/finance.expenses.route'
 import { Route as authedFinanceReceiptsIndexRouteImport } from './routes/(authed)/finance.receipts.index'
+import { Route as authedFinancePettyCashIndexRouteImport } from './routes/(authed)/finance.petty-cash.index'
 import { Route as authedFinanceFundRequisitionsIndexRouteImport } from './routes/(authed)/finance.fund-requisitions.index'
 import { Route as authedFinanceExpensesIndexRouteImport } from './routes/(authed)/finance.expenses.index'
 import { Route as authedFinanceReceiptsNewRouteImport } from './routes/(authed)/finance.receipts.new'
+import { Route as authedFinancePettyCashNewRouteImport } from './routes/(authed)/finance.petty-cash.new'
 import { Route as authedFinanceFundRequisitionsNewRouteImport } from './routes/(authed)/finance.fund-requisitions.new'
 import { Route as authedFinanceExpensesNewRouteImport } from './routes/(authed)/finance.expenses.new'
 import { Route as authedFinanceFundRequisitionsRequestIdRouteRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.route'
 import { Route as authedFinanceReceiptsReceiptIdEditRouteImport } from './routes/(authed)/finance.receipts.$receiptId.edit'
+import { Route as authedFinancePettyCashPettyCashIdEditRouteImport } from './routes/(authed)/finance.petty-cash.$pettyCashId.edit'
 import { Route as authedFinanceFundRequisitionsRequestIdEditRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.edit'
 import { Route as authedFinanceFundRequisitionsRequestIdActionRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.action'
 import { Route as authedFinanceExpensesExpenseIdEditRouteImport } from './routes/(authed)/finance.expenses.$expenseId.edit'
@@ -85,6 +89,12 @@ const authedFinanceReceiptsRouteRoute =
     path: '/receipts',
     getParentRoute: () => authedFinanceRouteRoute,
   } as any)
+const authedFinancePettyCashRouteRoute =
+  authedFinancePettyCashRouteRouteImport.update({
+    id: '/petty-cash',
+    path: '/petty-cash',
+    getParentRoute: () => authedFinanceRouteRoute,
+  } as any)
 const authedFinanceFundRequisitionsRouteRoute =
   authedFinanceFundRequisitionsRouteRouteImport.update({
     id: '/fund-requisitions',
@@ -103,6 +113,12 @@ const authedFinanceReceiptsIndexRoute =
     path: '/',
     getParentRoute: () => authedFinanceReceiptsRouteRoute,
   } as any)
+const authedFinancePettyCashIndexRoute =
+  authedFinancePettyCashIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => authedFinancePettyCashRouteRoute,
+  } as any)
 const authedFinanceFundRequisitionsIndexRoute =
   authedFinanceFundRequisitionsIndexRouteImport.update({
     id: '/',
@@ -120,6 +136,12 @@ const authedFinanceReceiptsNewRoute =
     id: '/new',
     path: '/new',
     getParentRoute: () => authedFinanceReceiptsRouteRoute,
+  } as any)
+const authedFinancePettyCashNewRoute =
+  authedFinancePettyCashNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => authedFinancePettyCashRouteRoute,
   } as any)
 const authedFinanceFundRequisitionsNewRoute =
   authedFinanceFundRequisitionsNewRouteImport.update({
@@ -144,6 +166,12 @@ const authedFinanceReceiptsReceiptIdEditRoute =
     id: '/$receiptId/edit',
     path: '/$receiptId/edit',
     getParentRoute: () => authedFinanceReceiptsRouteRoute,
+  } as any)
+const authedFinancePettyCashPettyCashIdEditRoute =
+  authedFinancePettyCashPettyCashIdEditRouteImport.update({
+    id: '/$pettyCashId/edit',
+    path: '/$pettyCashId/edit',
+    getParentRoute: () => authedFinancePettyCashRouteRoute,
   } as any)
 const authedFinanceFundRequisitionsRequestIdEditRoute =
   authedFinanceFundRequisitionsRequestIdEditRouteImport.update({
@@ -172,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof authLoginRoute
   '/finance/expenses': typeof authedFinanceExpensesRouteRouteWithChildren
   '/finance/fund-requisitions': typeof authedFinanceFundRequisitionsRouteRouteWithChildren
+  '/finance/petty-cash': typeof authedFinancePettyCashRouteRouteWithChildren
   '/finance/receipts': typeof authedFinanceReceiptsRouteRouteWithChildren
   '/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/finance/dashboard': typeof authedFinanceDashboardRoute
@@ -179,13 +208,16 @@ export interface FileRoutesByFullPath {
   '/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
   '/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
+  '/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
   '/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
+  '/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
   '/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
+  '/finance/petty-cash/$pettyCashId/edit': typeof authedFinancePettyCashPettyCashIdEditRoute
   '/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -200,13 +232,16 @@ export interface FileRoutesByTo {
   '/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
   '/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
+  '/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
   '/finance/expenses': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions': typeof authedFinanceFundRequisitionsIndexRoute
+  '/finance/petty-cash': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts': typeof authedFinanceReceiptsIndexRoute
   '/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
+  '/finance/petty-cash/$pettyCashId/edit': typeof authedFinancePettyCashPettyCashIdEditRoute
   '/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRoutesById {
@@ -219,6 +254,7 @@ export interface FileRoutesById {
   '/(auth)/login': typeof authLoginRoute
   '/(authed)/finance/expenses': typeof authedFinanceExpensesRouteRouteWithChildren
   '/(authed)/finance/fund-requisitions': typeof authedFinanceFundRequisitionsRouteRouteWithChildren
+  '/(authed)/finance/petty-cash': typeof authedFinancePettyCashRouteRouteWithChildren
   '/(authed)/finance/receipts': typeof authedFinanceReceiptsRouteRouteWithChildren
   '/(authed)/finance/chart-of-accounts': typeof authedFinanceChartOfAccountsRoute
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
@@ -226,13 +262,16 @@ export interface FileRoutesById {
   '/(authed)/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
   '/(authed)/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/(authed)/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
+  '/(authed)/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/(authed)/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
   '/(authed)/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/(authed)/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
+  '/(authed)/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/(authed)/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
   '/(authed)/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/(authed)/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/(authed)/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
+  '/(authed)/finance/petty-cash/$pettyCashId/edit': typeof authedFinancePettyCashPettyCashIdEditRoute
   '/(authed)/finance/receipts/$receiptId/edit': typeof authedFinanceReceiptsReceiptIdEditRoute
 }
 export interface FileRouteTypes {
@@ -245,6 +284,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/finance/expenses'
     | '/finance/fund-requisitions'
+    | '/finance/petty-cash'
     | '/finance/receipts'
     | '/finance/chart-of-accounts'
     | '/finance/dashboard'
@@ -252,13 +292,16 @@ export interface FileRouteTypes {
     | '/finance/fund-requisitions/$requestId'
     | '/finance/expenses/new'
     | '/finance/fund-requisitions/new'
+    | '/finance/petty-cash/new'
     | '/finance/receipts/new'
     | '/finance/expenses/'
     | '/finance/fund-requisitions/'
+    | '/finance/petty-cash/'
     | '/finance/receipts/'
     | '/finance/expenses/$expenseId/edit'
     | '/finance/fund-requisitions/$requestId/action'
     | '/finance/fund-requisitions/$requestId/edit'
+    | '/finance/petty-cash/$pettyCashId/edit'
     | '/finance/receipts/$receiptId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -273,13 +316,16 @@ export interface FileRouteTypes {
     | '/finance/fund-requisitions/$requestId'
     | '/finance/expenses/new'
     | '/finance/fund-requisitions/new'
+    | '/finance/petty-cash/new'
     | '/finance/receipts/new'
     | '/finance/expenses'
     | '/finance/fund-requisitions'
+    | '/finance/petty-cash'
     | '/finance/receipts'
     | '/finance/expenses/$expenseId/edit'
     | '/finance/fund-requisitions/$requestId/action'
     | '/finance/fund-requisitions/$requestId/edit'
+    | '/finance/petty-cash/$pettyCashId/edit'
     | '/finance/receipts/$receiptId/edit'
   id:
     | '__root__'
@@ -291,6 +337,7 @@ export interface FileRouteTypes {
     | '/(auth)/login'
     | '/(authed)/finance/expenses'
     | '/(authed)/finance/fund-requisitions'
+    | '/(authed)/finance/petty-cash'
     | '/(authed)/finance/receipts'
     | '/(authed)/finance/chart-of-accounts'
     | '/(authed)/finance/dashboard'
@@ -298,13 +345,16 @@ export interface FileRouteTypes {
     | '/(authed)/finance/fund-requisitions/$requestId'
     | '/(authed)/finance/expenses/new'
     | '/(authed)/finance/fund-requisitions/new'
+    | '/(authed)/finance/petty-cash/new'
     | '/(authed)/finance/receipts/new'
     | '/(authed)/finance/expenses/'
     | '/(authed)/finance/fund-requisitions/'
+    | '/(authed)/finance/petty-cash/'
     | '/(authed)/finance/receipts/'
     | '/(authed)/finance/expenses/$expenseId/edit'
     | '/(authed)/finance/fund-requisitions/$requestId/action'
     | '/(authed)/finance/fund-requisitions/$requestId/edit'
+    | '/(authed)/finance/petty-cash/$pettyCashId/edit'
     | '/(authed)/finance/receipts/$receiptId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -389,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceReceiptsRouteRouteImport
       parentRoute: typeof authedFinanceRouteRoute
     }
+    '/(authed)/finance/petty-cash': {
+      id: '/(authed)/finance/petty-cash'
+      path: '/petty-cash'
+      fullPath: '/finance/petty-cash'
+      preLoaderRoute: typeof authedFinancePettyCashRouteRouteImport
+      parentRoute: typeof authedFinanceRouteRoute
+    }
     '/(authed)/finance/fund-requisitions': {
       id: '/(authed)/finance/fund-requisitions'
       path: '/fund-requisitions'
@@ -410,6 +467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceReceiptsIndexRouteImport
       parentRoute: typeof authedFinanceReceiptsRouteRoute
     }
+    '/(authed)/finance/petty-cash/': {
+      id: '/(authed)/finance/petty-cash/'
+      path: '/'
+      fullPath: '/finance/petty-cash/'
+      preLoaderRoute: typeof authedFinancePettyCashIndexRouteImport
+      parentRoute: typeof authedFinancePettyCashRouteRoute
+    }
     '/(authed)/finance/fund-requisitions/': {
       id: '/(authed)/finance/fund-requisitions/'
       path: '/'
@@ -430,6 +494,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finance/receipts/new'
       preLoaderRoute: typeof authedFinanceReceiptsNewRouteImport
       parentRoute: typeof authedFinanceReceiptsRouteRoute
+    }
+    '/(authed)/finance/petty-cash/new': {
+      id: '/(authed)/finance/petty-cash/new'
+      path: '/new'
+      fullPath: '/finance/petty-cash/new'
+      preLoaderRoute: typeof authedFinancePettyCashNewRouteImport
+      parentRoute: typeof authedFinancePettyCashRouteRoute
     }
     '/(authed)/finance/fund-requisitions/new': {
       id: '/(authed)/finance/fund-requisitions/new'
@@ -458,6 +529,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finance/receipts/$receiptId/edit'
       preLoaderRoute: typeof authedFinanceReceiptsReceiptIdEditRouteImport
       parentRoute: typeof authedFinanceReceiptsRouteRoute
+    }
+    '/(authed)/finance/petty-cash/$pettyCashId/edit': {
+      id: '/(authed)/finance/petty-cash/$pettyCashId/edit'
+      path: '/$pettyCashId/edit'
+      fullPath: '/finance/petty-cash/$pettyCashId/edit'
+      preLoaderRoute: typeof authedFinancePettyCashPettyCashIdEditRouteImport
+      parentRoute: typeof authedFinancePettyCashRouteRoute
     }
     '/(authed)/finance/fund-requisitions/$requestId/edit': {
       id: '/(authed)/finance/fund-requisitions/$requestId/edit'
@@ -541,6 +619,25 @@ const authedFinanceFundRequisitionsRouteRouteWithChildren =
     authedFinanceFundRequisitionsRouteRouteChildren,
   )
 
+interface authedFinancePettyCashRouteRouteChildren {
+  authedFinancePettyCashNewRoute: typeof authedFinancePettyCashNewRoute
+  authedFinancePettyCashIndexRoute: typeof authedFinancePettyCashIndexRoute
+  authedFinancePettyCashPettyCashIdEditRoute: typeof authedFinancePettyCashPettyCashIdEditRoute
+}
+
+const authedFinancePettyCashRouteRouteChildren: authedFinancePettyCashRouteRouteChildren =
+  {
+    authedFinancePettyCashNewRoute: authedFinancePettyCashNewRoute,
+    authedFinancePettyCashIndexRoute: authedFinancePettyCashIndexRoute,
+    authedFinancePettyCashPettyCashIdEditRoute:
+      authedFinancePettyCashPettyCashIdEditRoute,
+  }
+
+const authedFinancePettyCashRouteRouteWithChildren =
+  authedFinancePettyCashRouteRoute._addFileChildren(
+    authedFinancePettyCashRouteRouteChildren,
+  )
+
 interface authedFinanceReceiptsRouteRouteChildren {
   authedFinanceReceiptsNewRoute: typeof authedFinanceReceiptsNewRoute
   authedFinanceReceiptsIndexRoute: typeof authedFinanceReceiptsIndexRoute
@@ -563,6 +660,7 @@ const authedFinanceReceiptsRouteRouteWithChildren =
 interface authedFinanceRouteRouteChildren {
   authedFinanceExpensesRouteRoute: typeof authedFinanceExpensesRouteRouteWithChildren
   authedFinanceFundRequisitionsRouteRoute: typeof authedFinanceFundRequisitionsRouteRouteWithChildren
+  authedFinancePettyCashRouteRoute: typeof authedFinancePettyCashRouteRouteWithChildren
   authedFinanceReceiptsRouteRoute: typeof authedFinanceReceiptsRouteRouteWithChildren
   authedFinanceChartOfAccountsRoute: typeof authedFinanceChartOfAccountsRoute
   authedFinanceDashboardRoute: typeof authedFinanceDashboardRoute
@@ -572,6 +670,8 @@ const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
   authedFinanceExpensesRouteRoute: authedFinanceExpensesRouteRouteWithChildren,
   authedFinanceFundRequisitionsRouteRoute:
     authedFinanceFundRequisitionsRouteRouteWithChildren,
+  authedFinancePettyCashRouteRoute:
+    authedFinancePettyCashRouteRouteWithChildren,
   authedFinanceReceiptsRouteRoute: authedFinanceReceiptsRouteRouteWithChildren,
   authedFinanceChartOfAccountsRoute: authedFinanceChartOfAccountsRoute,
   authedFinanceDashboardRoute: authedFinanceDashboardRoute,

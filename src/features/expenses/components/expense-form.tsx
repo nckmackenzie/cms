@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouteContext } from "@tanstack/react-router";
 import { TrashIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
@@ -49,6 +49,7 @@ type ExpenseFormProps = {
 };
 
 export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
+	const queryClient = useQueryClient();
 	const { banks, expenseAccounts, assetAccounts, groups, districts } =
 		useRouteContext({
 			from: "/(authed)/finance/expenses",
@@ -102,6 +103,7 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 		groupId,
 		districtId,
 		requisitionId,
+		expenseDate,
 	] = useStore(form.store, (state) => [
 		state.values.lines,
 		state.values.expenseType,
@@ -109,6 +111,7 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 		state.values.groupId,
 		state.values.districtId,
 		state.values.requisitionId,
+		state.values.expenseDate,
 	]);
 
 	const canLoadRequisitions =
@@ -209,6 +212,17 @@ export function ExpenseForm({ voucherNo, initialData }: ExpenseFormProps) {
 		previousGroupId.current = groupId;
 		previousDistrictId.current = districtId;
 	}, [expenseType, groupId, districtId, form]);
+
+	useEffect(() => {
+		if (isEdit || !expenseDate) return;
+		queryClient
+			.fetchQuery({
+				...expenseQueries.expenseNo(expenseDate),
+			})
+			.then((data) => {
+				form.setFieldValue("voucherNo", data);
+			});
+	}, [expenseDate, isEdit, form, queryClient]);
 
 	return (
 		<form

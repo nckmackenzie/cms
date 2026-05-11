@@ -12,6 +12,7 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
+import z from "zod";
 import { db } from "#/db";
 import { type DebitCredit, receiptDetails, receiptHeader } from "#/db/schema";
 import { getFinancialYearByDate } from "#/features/fiscal-years/services/years.api";
@@ -79,7 +80,10 @@ const createReceipt = async (
 
 	try {
 		await db.transaction(async (tx) => {
-			const receiptNo = await getReceiptNo(congregationId);
+			const receiptNo = await getReceiptNo({
+				congregationId,
+				contributionDate: data.contributionDate,
+			});
 			const header = await tx
 				.insert(receiptHeader)
 				.values({
@@ -265,8 +269,14 @@ const updateReceipt = async (
 	}
 };
 
-const getReceiptNo = async (congregationId: number) => {
-	const fiscalYear = await getFinancialYearByDate();
+const getReceiptNo = async ({
+	congregationId,
+	contributionDate,
+}: {
+	congregationId: number;
+	contributionDate: string;
+}) => {
+	const fiscalYear = await getFinancialYearByDate({ data: contributionDate });
 
 	const result = await db
 		.select({
@@ -286,13 +296,18 @@ const getReceiptNo = async (congregationId: number) => {
 
 export const getReceiptNoServerFn = createServerFn()
 	.middleware([authMiddleware])
+	.inputValidator(z.string().optional())
 	.handler(
 		async ({
 			context: {
 				user: { congregationId },
 			},
+			data,
 		}) => {
-			return getReceiptNo(congregationId);
+			return getReceiptNo({
+				congregationId,
+				contributionDate: data ?? dateFormat(new Date()),
+			});
 		},
 	);
 

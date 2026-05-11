@@ -132,7 +132,7 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: WalletIcon,
 				label: "Petty Cash",
-				href: "/",
+				href: "/finance/petty-cash",
 				activeOptions: { exact: false },
 			},
 			{

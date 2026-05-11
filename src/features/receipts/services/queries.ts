@@ -18,9 +18,9 @@ export const receiptQueries = {
 			queryKey: [...receiptQueries.all, "detail", receiptId],
 			queryFn: () => getReceipt({ data: receiptId }),
 		}),
-	receiptNo: () =>
+	receiptNo: (date?: string) =>
 		queryOptions({
-			queryKey: [...receiptQueries.all, "receiptNo"],
-			queryFn: () => getReceiptNoServerFn(),
+			queryKey: [...receiptQueries.all, "receiptNo", date],
+			queryFn: () => getReceiptNoServerFn({ data: date }),
 		}),
 };
