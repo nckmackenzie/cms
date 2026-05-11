@@ -17,10 +17,10 @@ export const expenseQueries = {
 			queryKey: [...expenseQueries.all, "list", filters],
 			queryFn: () => getExpenses({ data: filters }),
 		}),
-	expenseNo: () =>
+	expenseNo: (date?: string) =>
 		queryOptions({
-			queryKey: [...expenseQueries.all, "expenseNo"],
-			queryFn: () => voucherNoFn(),
+			queryKey: [...expenseQueries.all, "expenseNo", date],
+			queryFn: () => voucherNoFn({ data: date }),
 		}),
 	availableRequisitions: (filters: {
 		expenseType: ExpenseType;

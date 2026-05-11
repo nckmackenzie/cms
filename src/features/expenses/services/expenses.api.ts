@@ -40,7 +40,7 @@ import {
 import { getRequisitionByPublicId } from "#/features/funds-requisitions/services/funds-requisition.api";
 import { getGroupIdFn } from "#/features/groups/services/groups.api";
 import { createBankingEntry, deleteBankingEntry } from "#/lib/banking";
-import { normalizeText, toNumber } from "#/lib/helpers";
+import { dateFormat, normalizeText, toNumber } from "#/lib/helpers";
 import {
 	areJournalValuesBalanced,
 	createJournalEntry,
@@ -107,7 +107,7 @@ const getVoucherNo = async ({
 
 export const voucherNoFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Date is required"))
+	.inputValidator(z.string().optional())
 	.handler(
 		async ({
 			data: date,
@@ -115,7 +115,10 @@ export const voucherNoFn = createServerFn()
 				user: { congregationId },
 			},
 		}) => {
-			return await getVoucherNo({ congregationId, expenseDate: date });
+			return await getVoucherNo({
+				congregationId,
+				expenseDate: date ?? dateFormat(new Date()),
+			});
 		},
 	);
 
