@@ -507,6 +507,9 @@ export const pettyCash = pgTable(
 		narration: varchar("narration", { length: 255 }),
 		source: varchar("source_type", { length: 50 }),
 		sourceId: varchar("source_id", { length: 50 }),
+		debitingAccountId: integer("debiting_account_id").references(
+			() => ledgerAccounts.id,
+		),
 		congregationId: integer("congregation_id")
 			.notNull()
 			.references(() => congregations.id),
@@ -663,7 +666,10 @@ export const pettyCashRelations = relations(pettyCash, ({ one }) => ({
 	bank: one(ledgerAccounts, {
 		fields: [pettyCash.bankId],
 		references: [ledgerAccounts.id],
-		relationName: "petty_cash_bank",
+	}),
+	debitingAccount: one(ledgerAccounts, {
+		fields: [pettyCash.debitingAccountId],
+		references: [ledgerAccounts.id],
 	}),
 	congregation: one(congregations, {
 		fields: [pettyCash.congregationId],
