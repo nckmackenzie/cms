@@ -29,6 +29,7 @@ export const ACCOUNT_TYPES = [
 export const PAYMENT_METHODS = ["cash", "mpesa", "bank", "cheque"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 export const paymentMethodEnum = pgEnum("payment_method_enum", PAYMENT_METHODS);
+export const budgetTypeEnum = pgEnum("budget_type_enum", ["church", "group"]);
 
 export const CONTRIBUTION_CATEGORIES = [
 	"member",
@@ -638,6 +639,83 @@ export const mmf = pgTable(
 		index("mmfs_reference_idx").on(t.reference),
 	],
 );
+
+export const budgetsHeader = pgTable(
+	"budgets_header",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		type: budgetTypeEnum("type").notNull(),
+		groupId: integer("group_id").references(() => groups.id),
+		financialYearId: integer("financial_year_id").references(
+			() => fiscalYears.id,
+		),
+		deletedAt: timestamp("deleted_at"),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+	},
+	(table) => [
+		uniqueIndex("budgets_group_fy_unique").on(
+			table.groupId,
+			table.financialYearId,
+		).where(sql`${table.groupId} is not null`),
+		uniqueIndex("budgets_church_fy_unique")
+			.on(table.financialYearId)
+			.where(sql`${table.groupId} is null and ${table.type} = 'church'`),
+		index("budgets_group_idx").on(table.groupId),
+		index("budgets_financial_year_idx").on(table.financialYearId),
+	],
+);
+
+export const budgetsLine = pgTable(
+	"budgets_line",
+	{
+		id: uuid("public_id").defaultRandom().primaryKey().notNull(),
+		budgetHeaderId: integer("budget_header_id").references(
+			() => budgetsHeader.id,
+			{ onDelete: "cascade" },
+		),
+		accountId: integer("account_id")
+			.notNull()
+			.references(() => ledgerAccounts.id),
+		amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+	},
+	(table) => [
+		index("budgets_line_budget_header_idx").on(table.budgetHeaderId),
+		index("budgets_line_account_idx").on(table.accountId),
+	],
+);
+
+export const budgetsHeaderRelations = relations(
+	budgetsHeader,
+	({ many, one }) => ({
+		lines: many(budgetsLine),
+		congregation: one(congregations, {
+			fields: [budgetsHeader.congregationId],
+			references: [congregations.id],
+		}),
+		group: one(groups, {
+			fields: [budgetsHeader.groupId],
+			references: [groups.id],
+		}),
+		fiscalYear: one(fiscalYears, {
+			fields: [budgetsHeader.financialYearId],
+			references: [fiscalYears.id],
+		}),
+	}),
+);
+
+export const budgetsLineRelations = relations(budgetsLine, ({ one }) => ({
+	budgetsHeader: one(budgetsHeader, {
+		fields: [budgetsLine.budgetHeaderId],
+		references: [budgetsHeader.id],
+	}),
+	account: one(ledgerAccounts, {
+		fields: [budgetsLine.accountId],
+		references: [ledgerAccounts.id],
+	}),
+}));
 
 export const mmfRelations = relations(mmf, ({ one }) => ({
 	district: one(districts, {

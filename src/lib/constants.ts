@@ -138,7 +138,8 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: BriefcaseIcon,
 				label: "Budgets",
-				href: "/",
+				href: "/finance/budgets",
+				activeOptions: { exact: false },
 			},
 			{
 				icon: FileSpreadsheetIcon,

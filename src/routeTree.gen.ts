@@ -22,20 +22,24 @@ import { Route as authedFinanceReceiptsRouteRouteImport } from './routes/(authed
 import { Route as authedFinancePettyCashRouteRouteImport } from './routes/(authed)/finance.petty-cash.route'
 import { Route as authedFinanceFundRequisitionsRouteRouteImport } from './routes/(authed)/finance.fund-requisitions.route'
 import { Route as authedFinanceExpensesRouteRouteImport } from './routes/(authed)/finance.expenses.route'
+import { Route as authedFinanceBudgetsRouteRouteImport } from './routes/(authed)/finance.budgets.route'
 import { Route as authedFinanceReceiptsIndexRouteImport } from './routes/(authed)/finance.receipts.index'
 import { Route as authedFinancePettyCashIndexRouteImport } from './routes/(authed)/finance.petty-cash.index'
 import { Route as authedFinanceFundRequisitionsIndexRouteImport } from './routes/(authed)/finance.fund-requisitions.index'
 import { Route as authedFinanceExpensesIndexRouteImport } from './routes/(authed)/finance.expenses.index'
+import { Route as authedFinanceBudgetsIndexRouteImport } from './routes/(authed)/finance.budgets.index'
 import { Route as authedFinanceReceiptsNewRouteImport } from './routes/(authed)/finance.receipts.new'
 import { Route as authedFinancePettyCashNewRouteImport } from './routes/(authed)/finance.petty-cash.new'
 import { Route as authedFinanceFundRequisitionsNewRouteImport } from './routes/(authed)/finance.fund-requisitions.new'
 import { Route as authedFinanceExpensesNewRouteImport } from './routes/(authed)/finance.expenses.new'
+import { Route as authedFinanceBudgetsNewRouteImport } from './routes/(authed)/finance.budgets.new'
 import { Route as authedFinanceFundRequisitionsRequestIdRouteRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.route'
 import { Route as authedFinanceReceiptsReceiptIdEditRouteImport } from './routes/(authed)/finance.receipts.$receiptId.edit'
 import { Route as authedFinancePettyCashPettyCashIdEditRouteImport } from './routes/(authed)/finance.petty-cash.$pettyCashId.edit'
 import { Route as authedFinanceFundRequisitionsRequestIdEditRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.edit'
 import { Route as authedFinanceFundRequisitionsRequestIdActionRouteImport } from './routes/(authed)/finance.fund-requisitions.$requestId.action'
 import { Route as authedFinanceExpensesExpenseIdEditRouteImport } from './routes/(authed)/finance.expenses.$expenseId.edit'
+import { Route as authedFinanceBudgetsBudgetIdEditRouteImport } from './routes/(authed)/finance.budgets.$budgetId.edit'
 
 const authedRouteRoute = authedRouteRouteImport.update({
   id: '/(authed)',
@@ -107,6 +111,12 @@ const authedFinanceExpensesRouteRoute =
     path: '/expenses',
     getParentRoute: () => authedFinanceRouteRoute,
   } as any)
+const authedFinanceBudgetsRouteRoute =
+  authedFinanceBudgetsRouteRouteImport.update({
+    id: '/budgets',
+    path: '/budgets',
+    getParentRoute: () => authedFinanceRouteRoute,
+  } as any)
 const authedFinanceReceiptsIndexRoute =
   authedFinanceReceiptsIndexRouteImport.update({
     id: '/',
@@ -130,6 +140,12 @@ const authedFinanceExpensesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => authedFinanceExpensesRouteRoute,
+  } as any)
+const authedFinanceBudgetsIndexRoute =
+  authedFinanceBudgetsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => authedFinanceBudgetsRouteRoute,
   } as any)
 const authedFinanceReceiptsNewRoute =
   authedFinanceReceiptsNewRouteImport.update({
@@ -155,6 +171,11 @@ const authedFinanceExpensesNewRoute =
     path: '/new',
     getParentRoute: () => authedFinanceExpensesRouteRoute,
   } as any)
+const authedFinanceBudgetsNewRoute = authedFinanceBudgetsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => authedFinanceBudgetsRouteRoute,
+} as any)
 const authedFinanceFundRequisitionsRequestIdRouteRoute =
   authedFinanceFundRequisitionsRequestIdRouteRouteImport.update({
     id: '/$requestId',
@@ -191,6 +212,12 @@ const authedFinanceExpensesExpenseIdEditRoute =
     path: '/$expenseId/edit',
     getParentRoute: () => authedFinanceExpensesRouteRoute,
   } as any)
+const authedFinanceBudgetsBudgetIdEditRoute =
+  authedFinanceBudgetsBudgetIdEditRouteImport.update({
+    id: '/$budgetId/edit',
+    path: '/$budgetId/edit',
+    getParentRoute: () => authedFinanceBudgetsRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -198,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof authChangePasswordRoute
   '/forgot-password': typeof authForgotPasswordRoute
   '/login': typeof authLoginRoute
+  '/finance/budgets': typeof authedFinanceBudgetsRouteRouteWithChildren
   '/finance/expenses': typeof authedFinanceExpensesRouteRouteWithChildren
   '/finance/fund-requisitions': typeof authedFinanceFundRequisitionsRouteRouteWithChildren
   '/finance/petty-cash': typeof authedFinancePettyCashRouteRouteWithChildren
@@ -206,14 +234,17 @@ export interface FileRoutesByFullPath {
   '/finance/dashboard': typeof authedFinanceDashboardRoute
   '/api/fund-requisitions/get-balance': typeof ApiFundRequisitionsGetBalanceRoute
   '/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
+  '/finance/budgets/new': typeof authedFinanceBudgetsNewRoute
   '/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
   '/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/finance/budgets/': typeof authedFinanceBudgetsIndexRoute
   '/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
   '/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
+  '/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
   '/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
@@ -230,14 +261,17 @@ export interface FileRoutesByTo {
   '/finance/dashboard': typeof authedFinanceDashboardRoute
   '/api/fund-requisitions/get-balance': typeof ApiFundRequisitionsGetBalanceRoute
   '/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
+  '/finance/budgets/new': typeof authedFinanceBudgetsNewRoute
   '/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
   '/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/finance/budgets': typeof authedFinanceBudgetsIndexRoute
   '/finance/expenses': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions': typeof authedFinanceFundRequisitionsIndexRoute
   '/finance/petty-cash': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts': typeof authedFinanceReceiptsIndexRoute
+  '/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
   '/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
@@ -252,6 +286,7 @@ export interface FileRoutesById {
   '/(auth)/change-password': typeof authChangePasswordRoute
   '/(auth)/forgot-password': typeof authForgotPasswordRoute
   '/(auth)/login': typeof authLoginRoute
+  '/(authed)/finance/budgets': typeof authedFinanceBudgetsRouteRouteWithChildren
   '/(authed)/finance/expenses': typeof authedFinanceExpensesRouteRouteWithChildren
   '/(authed)/finance/fund-requisitions': typeof authedFinanceFundRequisitionsRouteRouteWithChildren
   '/(authed)/finance/petty-cash': typeof authedFinancePettyCashRouteRouteWithChildren
@@ -260,14 +295,17 @@ export interface FileRoutesById {
   '/(authed)/finance/dashboard': typeof authedFinanceDashboardRoute
   '/api/fund-requisitions/get-balance': typeof ApiFundRequisitionsGetBalanceRoute
   '/(authed)/finance/fund-requisitions/$requestId': typeof authedFinanceFundRequisitionsRequestIdRouteRouteWithChildren
+  '/(authed)/finance/budgets/new': typeof authedFinanceBudgetsNewRoute
   '/(authed)/finance/expenses/new': typeof authedFinanceExpensesNewRoute
   '/(authed)/finance/fund-requisitions/new': typeof authedFinanceFundRequisitionsNewRoute
   '/(authed)/finance/petty-cash/new': typeof authedFinancePettyCashNewRoute
   '/(authed)/finance/receipts/new': typeof authedFinanceReceiptsNewRoute
+  '/(authed)/finance/budgets/': typeof authedFinanceBudgetsIndexRoute
   '/(authed)/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/(authed)/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
   '/(authed)/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/(authed)/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
+  '/(authed)/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
   '/(authed)/finance/expenses/$expenseId/edit': typeof authedFinanceExpensesExpenseIdEditRoute
   '/(authed)/finance/fund-requisitions/$requestId/action': typeof authedFinanceFundRequisitionsRequestIdActionRoute
   '/(authed)/finance/fund-requisitions/$requestId/edit': typeof authedFinanceFundRequisitionsRequestIdEditRoute
@@ -282,6 +320,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/forgot-password'
     | '/login'
+    | '/finance/budgets'
     | '/finance/expenses'
     | '/finance/fund-requisitions'
     | '/finance/petty-cash'
@@ -290,14 +329,17 @@ export interface FileRouteTypes {
     | '/finance/dashboard'
     | '/api/fund-requisitions/get-balance'
     | '/finance/fund-requisitions/$requestId'
+    | '/finance/budgets/new'
     | '/finance/expenses/new'
     | '/finance/fund-requisitions/new'
     | '/finance/petty-cash/new'
     | '/finance/receipts/new'
+    | '/finance/budgets/'
     | '/finance/expenses/'
     | '/finance/fund-requisitions/'
     | '/finance/petty-cash/'
     | '/finance/receipts/'
+    | '/finance/budgets/$budgetId/edit'
     | '/finance/expenses/$expenseId/edit'
     | '/finance/fund-requisitions/$requestId/action'
     | '/finance/fund-requisitions/$requestId/edit'
@@ -314,14 +356,17 @@ export interface FileRouteTypes {
     | '/finance/dashboard'
     | '/api/fund-requisitions/get-balance'
     | '/finance/fund-requisitions/$requestId'
+    | '/finance/budgets/new'
     | '/finance/expenses/new'
     | '/finance/fund-requisitions/new'
     | '/finance/petty-cash/new'
     | '/finance/receipts/new'
+    | '/finance/budgets'
     | '/finance/expenses'
     | '/finance/fund-requisitions'
     | '/finance/petty-cash'
     | '/finance/receipts'
+    | '/finance/budgets/$budgetId/edit'
     | '/finance/expenses/$expenseId/edit'
     | '/finance/fund-requisitions/$requestId/action'
     | '/finance/fund-requisitions/$requestId/edit'
@@ -335,6 +380,7 @@ export interface FileRouteTypes {
     | '/(auth)/change-password'
     | '/(auth)/forgot-password'
     | '/(auth)/login'
+    | '/(authed)/finance/budgets'
     | '/(authed)/finance/expenses'
     | '/(authed)/finance/fund-requisitions'
     | '/(authed)/finance/petty-cash'
@@ -343,14 +389,17 @@ export interface FileRouteTypes {
     | '/(authed)/finance/dashboard'
     | '/api/fund-requisitions/get-balance'
     | '/(authed)/finance/fund-requisitions/$requestId'
+    | '/(authed)/finance/budgets/new'
     | '/(authed)/finance/expenses/new'
     | '/(authed)/finance/fund-requisitions/new'
     | '/(authed)/finance/petty-cash/new'
     | '/(authed)/finance/receipts/new'
+    | '/(authed)/finance/budgets/'
     | '/(authed)/finance/expenses/'
     | '/(authed)/finance/fund-requisitions/'
     | '/(authed)/finance/petty-cash/'
     | '/(authed)/finance/receipts/'
+    | '/(authed)/finance/budgets/$budgetId/edit'
     | '/(authed)/finance/expenses/$expenseId/edit'
     | '/(authed)/finance/fund-requisitions/$requestId/action'
     | '/(authed)/finance/fund-requisitions/$requestId/edit'
@@ -460,6 +509,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceExpensesRouteRouteImport
       parentRoute: typeof authedFinanceRouteRoute
     }
+    '/(authed)/finance/budgets': {
+      id: '/(authed)/finance/budgets'
+      path: '/budgets'
+      fullPath: '/finance/budgets'
+      preLoaderRoute: typeof authedFinanceBudgetsRouteRouteImport
+      parentRoute: typeof authedFinanceRouteRoute
+    }
     '/(authed)/finance/receipts/': {
       id: '/(authed)/finance/receipts/'
       path: '/'
@@ -488,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceExpensesIndexRouteImport
       parentRoute: typeof authedFinanceExpensesRouteRoute
     }
+    '/(authed)/finance/budgets/': {
+      id: '/(authed)/finance/budgets/'
+      path: '/'
+      fullPath: '/finance/budgets/'
+      preLoaderRoute: typeof authedFinanceBudgetsIndexRouteImport
+      parentRoute: typeof authedFinanceBudgetsRouteRoute
+    }
     '/(authed)/finance/receipts/new': {
       id: '/(authed)/finance/receipts/new'
       path: '/new'
@@ -515,6 +578,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finance/expenses/new'
       preLoaderRoute: typeof authedFinanceExpensesNewRouteImport
       parentRoute: typeof authedFinanceExpensesRouteRoute
+    }
+    '/(authed)/finance/budgets/new': {
+      id: '/(authed)/finance/budgets/new'
+      path: '/new'
+      fullPath: '/finance/budgets/new'
+      preLoaderRoute: typeof authedFinanceBudgetsNewRouteImport
+      parentRoute: typeof authedFinanceBudgetsRouteRoute
     }
     '/(authed)/finance/fund-requisitions/$requestId': {
       id: '/(authed)/finance/fund-requisitions/$requestId'
@@ -558,8 +628,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authedFinanceExpensesExpenseIdEditRouteImport
       parentRoute: typeof authedFinanceExpensesRouteRoute
     }
+    '/(authed)/finance/budgets/$budgetId/edit': {
+      id: '/(authed)/finance/budgets/$budgetId/edit'
+      path: '/$budgetId/edit'
+      fullPath: '/finance/budgets/$budgetId/edit'
+      preLoaderRoute: typeof authedFinanceBudgetsBudgetIdEditRouteImport
+      parentRoute: typeof authedFinanceBudgetsRouteRoute
+    }
   }
 }
+
+interface authedFinanceBudgetsRouteRouteChildren {
+  authedFinanceBudgetsNewRoute: typeof authedFinanceBudgetsNewRoute
+  authedFinanceBudgetsIndexRoute: typeof authedFinanceBudgetsIndexRoute
+  authedFinanceBudgetsBudgetIdEditRoute: typeof authedFinanceBudgetsBudgetIdEditRoute
+}
+
+const authedFinanceBudgetsRouteRouteChildren: authedFinanceBudgetsRouteRouteChildren =
+  {
+    authedFinanceBudgetsNewRoute: authedFinanceBudgetsNewRoute,
+    authedFinanceBudgetsIndexRoute: authedFinanceBudgetsIndexRoute,
+    authedFinanceBudgetsBudgetIdEditRoute:
+      authedFinanceBudgetsBudgetIdEditRoute,
+  }
+
+const authedFinanceBudgetsRouteRouteWithChildren =
+  authedFinanceBudgetsRouteRoute._addFileChildren(
+    authedFinanceBudgetsRouteRouteChildren,
+  )
 
 interface authedFinanceExpensesRouteRouteChildren {
   authedFinanceExpensesNewRoute: typeof authedFinanceExpensesNewRoute
@@ -658,6 +754,7 @@ const authedFinanceReceiptsRouteRouteWithChildren =
   )
 
 interface authedFinanceRouteRouteChildren {
+  authedFinanceBudgetsRouteRoute: typeof authedFinanceBudgetsRouteRouteWithChildren
   authedFinanceExpensesRouteRoute: typeof authedFinanceExpensesRouteRouteWithChildren
   authedFinanceFundRequisitionsRouteRoute: typeof authedFinanceFundRequisitionsRouteRouteWithChildren
   authedFinancePettyCashRouteRoute: typeof authedFinancePettyCashRouteRouteWithChildren
@@ -667,6 +764,7 @@ interface authedFinanceRouteRouteChildren {
 }
 
 const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
+  authedFinanceBudgetsRouteRoute: authedFinanceBudgetsRouteRouteWithChildren,
   authedFinanceExpensesRouteRoute: authedFinanceExpensesRouteRouteWithChildren,
   authedFinanceFundRequisitionsRouteRoute:
     authedFinanceFundRequisitionsRouteRouteWithChildren,
