@@ -43,7 +43,11 @@ export function useFormUpsert<TData extends { id?: string }, TResult = void>({
 		onError: (error) => {
 			console.error(":", error);
 			toast.error("Something went wrong", {
-				description: "Unexpected error occured!",
+				description: (
+					<p className="text-xs text-muted-foreground">
+						Unexpected error occured!
+					</p>
+				),
 			});
 		},
 		onSuccess: (result, variables) => {
