@@ -313,7 +313,17 @@ export const getBudgetById = createServerFn({ method: "GET" })
 					amount: sql<string>`'0'`,
 				})
 				.from(ledgerAccounts)
-				.where(notInArray(ledgerAccounts.id, includedIds)),
+				.where(
+					and(
+						includedIds.length > 0
+							? notInArray(ledgerAccounts.id, includedIds)
+							: undefined,
+						eq(ledgerAccounts.accountType, "expense"),
+						eq(ledgerAccounts.isPosting, true),
+						eq(ledgerAccounts.forGroup, budget.type === "group"),
+						isNull(ledgerAccounts.deletedAt),
+					),
+				),
 		);
 
 		return {

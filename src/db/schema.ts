@@ -659,7 +659,10 @@ export const budgetsHeader = pgTable(
 		uniqueIndex("budgets_group_fy_unique").on(
 			table.groupId,
 			table.financialYearId,
-		),
+		).where(sql`${table.groupId} is not null`),
+		uniqueIndex("budgets_church_fy_unique")
+			.on(table.financialYearId)
+			.where(sql`${table.groupId} is null and ${table.type} = 'church'`),
 		index("budgets_group_idx").on(table.groupId),
 		index("budgets_financial_year_idx").on(table.financialYearId),
 	],
@@ -668,7 +671,7 @@ export const budgetsHeader = pgTable(
 export const budgetsLine = pgTable(
 	"budgets_line",
 	{
-		id: uuid("public_id").defaultRandom().unique().notNull(),
+		id: uuid("public_id").defaultRandom().primaryKey().notNull(),
 		budgetHeaderId: integer("budget_header_id").references(
 			() => budgetsHeader.id,
 			{ onDelete: "cascade" },
@@ -704,7 +707,7 @@ export const budgetsHeaderRelations = relations(
 );
 
 export const budgetsLineRelations = relations(budgetsLine, ({ one }) => ({
-	bodygetsHeader: one(budgetsHeader, {
+	budgetsHeader: one(budgetsHeader, {
 		fields: [budgetsLine.budgetHeaderId],
 		references: [budgetsHeader.id],
 	}),
