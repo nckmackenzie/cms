@@ -26,6 +26,7 @@ type CreateJournalEntryParams = {
 		| "transactionDate"
 	>[];
 	source: { source: Source; sourceId: string };
+	journalNo?: number;
 	tx?: Transaction;
 };
 
@@ -34,6 +35,7 @@ export const createJournalEntry = async ({
 	transactionDate,
 	lines,
 	source: { source, sourceId },
+	journalNo,
 	tx,
 }: CreateJournalEntryParams) => {
 	const connection = tx ?? db;
@@ -46,6 +48,7 @@ export const createJournalEntry = async ({
 				sourceId,
 				transactionDate,
 				congregationId,
+				journalNo,
 			})),
 		);
 	}
