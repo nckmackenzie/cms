@@ -864,3 +864,92 @@ export function GlobalNotFound() {
 		</>
 	);
 }
+
+export function RouteNotFound() {
+	const router = useRouter();
+	return (
+		<>
+			<Keyframes />
+
+			<div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background font-sans">
+				<div className="flex-1 flex flex-col items-start justify-center px-10 md:px-16 py-12 relative">
+					<div
+						className="
+            inline-flex items-center gap-1.5 mb-5
+            bg-primary/10 text-primary
+            text-[0.68rem] font-semibold uppercase tracking-widest
+            px-3 py-1 rounded-full
+            animate-in fade-in slide-in-from-bottom-2 duration-400
+          "
+					>
+						<Compass size={12} strokeWidth={2.2} />
+						Page not found
+					</div>
+
+					{/* Heading */}
+					<h1
+						className="
+            font-display font-extrabold text-foreground
+            text-4xl md:text-5xl leading-[1.08] tracking-tight
+            max-w-lg mb-4
+            animate-in fade-in slide-in-from-bottom-2 duration-400 delay-75
+          "
+					>
+						You've wandered off
+						<br />
+						<span className="text-primary">the map.</span>
+					</h1>
+
+					{/* Body copy */}
+					<p
+						className="
+            text-sm text-muted-foreground leading-relaxed max-w-sm mb-8
+            animate-in fade-in slide-in-from-bottom-2 duration-400 delay-150
+          "
+					>
+						The page you're looking for doesn't exist, was moved, or you may not
+						have permission to view it. Let's get you back on track.
+					</p>
+
+					{/* Primary actions */}
+					<div
+						className="
+            flex flex-wrap gap-2.5 mb-10
+            animate-in fade-in slide-in-from-bottom-2 duration-400 delay-200
+          "
+					>
+						<button
+							onClick={() => router.navigate({ to: "/" })}
+							className="
+                inline-flex items-center gap-1.5 text-sm font-medium
+                px-4 py-2.5 rounded-md border-[1.5px]
+                bg-primary text-primary-foreground border-primary
+                hover:brightness-90 hover:-translate-y-px
+                active:translate-y-0 transition-all duration-150 cursor-pointer
+              "
+							type="button"
+						>
+							<Home size={14} strokeWidth={2} />
+							Back to Dashboard
+						</button>
+						<button
+							onClick={() => router.history.back()}
+							type="button"
+							className="
+                inline-flex items-center gap-1.5 text-sm font-medium
+                px-4 py-2.5 rounded-md border-[1.5px]
+                bg-transparent text-muted-foreground border-border
+                hover:bg-muted hover:text-foreground
+                hover:-translate-y-px active:translate-y-0
+                transition-all duration-150 cursor-pointer
+              "
+						>
+							<ArrowLeft size={14} strokeWidth={2} />
+							Go back
+						</button>
+					</div>
+				</div>
+			</div>
+		</>
+	);
+}
