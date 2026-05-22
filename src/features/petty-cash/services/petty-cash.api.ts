@@ -254,8 +254,12 @@ const createPettyCashReceipt = async (
 			const sourceId = created.id.toString();
 
 			await createJournalEntry({
-				congregationId,
-				transactionDate: values.receiptDate,
+				entry: {
+					congregationId,
+					transactionDate: values.receiptDate,
+					source: "Petty Cash",
+					sourceId,
+				},
 				lines: buildPettyCashJournalLines({
 					amount: values.amount,
 					reference: values.reference,
@@ -263,7 +267,6 @@ const createPettyCashReceipt = async (
 					destinationAccountId,
 					bankAccountId,
 				}),
-				source: { source: "Petty Cash", sourceId },
 				tx,
 			});
 
@@ -346,8 +349,12 @@ const updatePettyCashReceipt = async (
 			});
 
 			await createJournalEntry({
-				congregationId,
-				transactionDate: values.receiptDate,
+				entry: {
+					congregationId,
+					transactionDate: values.receiptDate,
+					source: "Petty Cash",
+					sourceId,
+				},
 				lines: buildPettyCashJournalLines({
 					amount: values.amount,
 					reference: values.reference,
@@ -355,7 +362,6 @@ const updatePettyCashReceipt = async (
 					destinationAccountId,
 					bankAccountId,
 				}),
-				source: { source: "Petty Cash", sourceId },
 				tx,
 			});
 

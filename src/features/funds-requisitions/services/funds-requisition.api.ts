@@ -572,13 +572,13 @@ export const approveRequisition = createServerFn({ method: "POST" })
 					}
 
 					await createJournalEntry({
-						congregationId,
-						transactionDate: data.paymentDate,
-						lines: journalLines,
-						source: {
+						entry: {
+							congregationId,
+							transactionDate: data.paymentDate,
 							source: "Group Fund Approval",
 							sourceId: requisition.id.toString(),
 						},
+						lines: journalLines,
 						tx,
 					});
 					if (data.paymentMethod !== "cash") {
