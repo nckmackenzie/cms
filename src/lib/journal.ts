@@ -5,7 +5,12 @@ import type { PgTransaction } from "drizzle-orm/pg-core";
 import type { Source } from "#/lib/constants";
 import { db } from "@/db";
 import type * as schema from "@/db/schema";
-import { journalEntries, ledgerAccounts } from "@/db/schema";
+import {
+	journalEntries,
+	journalEntriesHeaders,
+	journalEntryLines,
+	ledgerAccounts,
+} from "@/db/schema";
 
 export type Transaction = PgTransaction<
 	NodePgQueryResultHKT,
@@ -14,46 +19,50 @@ export type Transaction = PgTransaction<
 >;
 
 type CreateJournalEntryParams = {
-	transactionDate: string;
-	congregationId: number;
-	lines: Omit<
-		typeof journalEntries.$inferInsert,
-		| "id"
-		| "deletedAt"
-		| "source"
-		| "sourceId"
-		| "congregationId"
-		| "transactionDate"
-	>[];
-	source: { source: Source; sourceId: string };
-	journalNo?: number;
+	entry: Pick<
+		typeof journalEntriesHeaders.$inferInsert,
+		"congregationId" | "journalNo" | "transactionDate" | "source" | "sourceId"
+	>;
+	lines: Omit<typeof journalEntryLines.$inferInsert, "id" | "journalId">[];
 	tx?: Transaction;
 };
 
 export const createJournalEntry = async ({
-	congregationId,
-	transactionDate,
+	entry,
 	lines,
-	source: { source, sourceId },
-	journalNo,
 	tx,
 }: CreateJournalEntryParams) => {
 	const connection = tx ?? db;
 
+	const [{ id: journalId }] = await connection
+		.insert(journalEntriesHeaders)
+		.values(entry)
+		.returning({ id: journalEntries.id });
+
 	if (lines.length > 0) {
-		await connection.insert(journalEntries).values(
+		await connection.insert(journalEntryLines).values(
 			lines.map((line) => ({
 				...line,
-				source,
-				sourceId,
-				transactionDate,
-				congregationId,
-				journalNo,
+				journalId: journalId,
 			})),
 		);
 	}
+	return journalId;
 
-	return { source, sourceId };
+	// if (lines.length > 0) {
+	// 	await connection.insert(journalEntries).values(
+	// 		lines.map((line) => ({
+	// 			...line,
+	// 			source,
+	// 			sourceId,
+	// 			transactionDate,
+	// 			congregationId,
+	// 			journalNo,
+	// 		})),
+	// 	);
+	// }
+
+	// return { source, sourceId };
 };
 
 type DeleteJournalEntryParams = {
@@ -72,18 +81,30 @@ export const deleteJournalEntry = async ({
 	const connection = tx ?? db;
 
 	const filters = [];
-	if (id) filters.push(eq(journalEntries.id, id));
-	if (source) filters.push(eq(journalEntries.source, source));
-	if (sourceId) filters.push(eq(journalEntries.sourceId, sourceId));
+	if (id) filters.push(eq(journalEntriesHeaders.id, id));
+	if (source) filters.push(eq(journalEntriesHeaders.source, source));
+	if (sourceId) filters.push(eq(journalEntriesHeaders.sourceId, sourceId));
 
 	if (filters.length === 0) {
 		throw new Error("No criteria provided for deleting journal entry");
 	}
 
 	await connection
-		.delete(journalEntries)
+		.delete(journalEntriesHeaders)
 		.where(and(...filters))
-		.returning({ id: journalEntries.id });
+		.returning({ id: journalEntriesHeaders.id });
+	// if (id) filters.push(eq(journalEntries.id, id));
+	// if (source) filters.push(eq(journalEntries.source, source));
+	// if (sourceId) filters.push(eq(journalEntries.sourceId, sourceId));
+
+	// if (filters.length === 0) {
+	// 	throw new Error("No criteria provided for deleting journal entry");
+	// }
+
+	// await connection
+	// 	.delete(journalEntries)
+	// 	.where(and(...filters))
+	// 	.returning({ id: journalEntries.id });
 };
 
 export const areJournalValuesBalanced = (
