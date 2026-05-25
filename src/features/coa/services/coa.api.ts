@@ -2,7 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
-import { ACCOUNT_TYPES, journalEntries, ledgerAccounts } from "#/db/schema";
+import {
+	ACCOUNT_TYPES,
+	journalEntriesHeaders,
+	journalEntryLines,
+	ledgerAccounts,
+} from "#/db/schema";
 import {
 	accountsFormSchema,
 	coaValidateSearch,
@@ -335,28 +340,32 @@ export const getTransactionJournal = createServerFn()
 		}) => {
 			const data = await db
 				.select({
-					id: journalEntries.publicId,
-					date: journalEntries.transactionDate,
+					id: journalEntryLines.id,
+					date: journalEntriesHeaders.transactionDate,
 					accountName: ledgerAccounts.name,
 					accountType: ledgerAccounts.accountType,
-					debit: sql<number>`CASE WHEN ${journalEntries.dc} = 'debit' THEN ${journalEntries.amount} ELSE 0 END`,
-					credit: sql<number>`CASE WHEN ${journalEntries.dc} = 'credit' THEN ${journalEntries.amount} ELSE 0 END`,
-					narration: journalEntries.memo,
+					debit: sql<number>`CASE WHEN ${journalEntryLines.dc} = 'debit' THEN ${journalEntryLines.amount} ELSE 0 END`,
+					credit: sql<number>`CASE WHEN ${journalEntryLines.dc} = 'credit' THEN ${journalEntryLines.amount} ELSE 0 END`,
+					narration: journalEntryLines.memo,
 				})
-				.from(journalEntries)
+				.from(journalEntriesHeaders)
+				.innerJoin(
+					journalEntryLines,
+					eq(journalEntriesHeaders.id, journalEntryLines.journalId),
+				)
 				.innerJoin(
 					ledgerAccounts,
-					eq(journalEntries.accountId, ledgerAccounts.id),
+					eq(journalEntryLines.accountId, ledgerAccounts.id),
 				)
 				.where(
 					and(
-						eq(journalEntries.source, source),
-						eq(journalEntries.sourceId, sourceId),
-						eq(journalEntries.congregationId, congregationId),
-						isNull(journalEntries.deletedAt),
+						eq(journalEntriesHeaders.source, source),
+						eq(journalEntriesHeaders.sourceId, sourceId),
+						eq(journalEntriesHeaders.congregationId, congregationId),
+						isNull(journalEntriesHeaders.deletedAt),
 					),
 				)
-				.orderBy(asc(journalEntries.dc), asc(journalEntries.lineNumber));
+				.orderBy(asc(journalEntryLines.dc), asc(journalEntryLines.lineNumber));
 
 			if (data.length === 0) {
 				throw new Error("Transaction journal not found");

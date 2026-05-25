@@ -13,10 +13,10 @@ export const Route = createFileRoute("/(authed)/finance/journal-entries/")({
 		breadcrumb: "Journal Entries",
 	},
 	validateSearch: z.object({
-		journalNo: z
-			.number({ error: "Journal No is required and has to be a number" })
+		public_id: z
+			.uuid({ error: "Selected journal entry is invalid" })
 			.optional()
-			.catch(0),
+			.catch(undefined),
 	}),
 	loader: async ({ context: { queryClient } }) => {
 		const [accounts, allAccounts, currentFiscalYear] = await Promise.all([

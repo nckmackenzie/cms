@@ -47,6 +47,7 @@ interface DataTableProps<TData, TValue> {
 	customFooter?: React.ReactNode;
 	exportToExcel?: boolean;
 	exportFileName?: string;
+	onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -57,6 +58,7 @@ export function DataTable<TData, TValue>({
 	customFooter,
 	exportToExcel = false,
 	exportFileName = "datatable-export.csv",
+	onRowClick,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const { exportToCsv } = useExportToCsv();
@@ -199,6 +201,10 @@ export function DataTable<TData, TValue>({
 								<TableRow
 									key={row.id}
 									data-state={row.getIsSelected() && "selected"}
+									onClick={() => onRowClick?.(row.original)}
+									className={cn(
+										onRowClick && "cursor-pointer hover:bg-muted/50",
+									)}
 								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell

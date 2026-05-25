@@ -385,14 +385,16 @@ function Detail({
 			?.label ?? "—";
 	const contributor = useMemo(() => {
 		if (detail.category === "district") {
-			return districts.find((d) => d.value === detail.contributorDistrictId)
-				?.label;
+			return districts.find(
+				(d) => Number(d.value) === detail.contributorDistrictId,
+			)?.label;
 		}
 		if (detail.category === "group") {
-			return groups.find((g) => g.value === detail.contributorGroupId)?.label;
+			return groups.find((g) => Number(g.value) === detail.contributorGroupId)
+				?.label;
 		}
 		if (detail.category === "service") {
-			return services.find((s) => s.value === detail.contributorServiceId)
+			return services.find((s) => Number(s.value) === detail.contributorServiceId)
 				?.label;
 		}
 		return "—";

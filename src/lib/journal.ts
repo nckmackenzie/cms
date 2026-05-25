@@ -6,7 +6,7 @@ import type { Source } from "#/lib/constants";
 import { db } from "@/db";
 import type * as schema from "@/db/schema";
 import {
-	journalEntries,
+	type journalEntries,
 	journalEntriesHeaders,
 	journalEntryLines,
 	ledgerAccounts,
@@ -37,7 +37,7 @@ export const createJournalEntry = async ({
 	const [{ id: journalId }] = await connection
 		.insert(journalEntriesHeaders)
 		.values(entry)
-		.returning({ id: journalEntries.id });
+		.returning({ id: journalEntriesHeaders.id });
 
 	if (lines.length > 0) {
 		await connection.insert(journalEntryLines).values(

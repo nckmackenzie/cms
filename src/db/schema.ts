@@ -360,6 +360,81 @@ export const journalEntries = pgTable(
 	],
 );
 
+export const journalEntriesHeaders = pgTable(
+	"journal_entries_headers",
+	{
+		id: integer().primaryKey().generatedByDefaultAsIdentity(),
+		publicId: uuid("public_id").defaultRandom().unique().notNull(),
+		journalNo: integer("journal_no"),
+		transactionDate: date("transaction_date").notNull(),
+		source: varchar("source", { length: 255 }),
+		sourceId: varchar("source_id", { length: 255 }),
+		congregationId: integer("congregation_id")
+			.notNull()
+			.references(() => congregations.id),
+		deletedAt: timestamp("deleted_at"),
+	},
+	(table) => [
+		index("journal_entries_headers_journal_no_idx").on(table.journalNo),
+		index("journal_entries_headers_transaction_date_idx").on(
+			table.transactionDate,
+		),
+		index("journal_entries_headers_congregation_id_idx").on(
+			table.congregationId,
+		),
+	],
+);
+
+export const journalEntryLines = pgTable(
+	"journal_entry_lines",
+	{
+		id: uuid("id").defaultRandom().unique().notNull(),
+		journalId: integer("journal_id")
+			.notNull()
+			.references(() => journalEntriesHeaders.id, {
+				onDelete: "cascade",
+			}),
+		lineNumber: integer("line_number").notNull(),
+		accountId: integer("account_id")
+			.references(() => ledgerAccounts.id)
+			.notNull(),
+		dc: lineDcEnum("dc").notNull(),
+		amount: numeric("amount", { precision: 18, scale: 2 }).notNull(),
+		memo: text("memo"),
+		reference: varchar("reference", { length: 255 }),
+	},
+	(table) => [
+		index("journal_entry_lines_account_id_idx").on(table.accountId),
+		index("journal_entry_lines_journal_id_idx").on(table.journalId),
+		index("journal_entry_lines_reference_idx").on(table.reference),
+	],
+);
+
+export const journalEntriesHeadersRelations = relations(
+	journalEntriesHeaders,
+	({ many, one }) => ({
+		lines: many(journalEntryLines),
+		congregation: one(congregations, {
+			fields: [journalEntriesHeaders.congregationId],
+			references: [congregations.id],
+		}),
+	}),
+);
+
+export const journalEntryLinesRelations = relations(
+	journalEntryLines,
+	({ one }) => ({
+		account: one(ledgerAccounts, {
+			fields: [journalEntryLines.accountId],
+			references: [ledgerAccounts.id],
+		}),
+		header: one(journalEntriesHeaders, {
+			fields: [journalEntryLines.journalId],
+			references: [journalEntriesHeaders.id],
+		}),
+	}),
+);
+
 export const expensesHeader = pgTable(
 	"expenses_header",
 	{
@@ -656,10 +731,9 @@ export const budgetsHeader = pgTable(
 			.references(() => congregations.id),
 	},
 	(table) => [
-		uniqueIndex("budgets_group_fy_unique").on(
-			table.groupId,
-			table.financialYearId,
-		).where(sql`${table.groupId} is not null`),
+		uniqueIndex("budgets_group_fy_unique")
+			.on(table.groupId, table.financialYearId)
+			.where(sql`${table.groupId} is not null`),
 		uniqueIndex("budgets_church_fy_unique")
 			.on(table.financialYearId)
 			.where(sql`${table.groupId} is null and ${table.type} = 'church'`),

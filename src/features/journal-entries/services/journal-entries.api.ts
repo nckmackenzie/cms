@@ -1,11 +1,15 @@
 import { notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
-import { journalEntries } from "#/db/schema";
+import { journalEntriesHeaders, journalEntryLines } from "#/db/schema";
 import { getAccountByPublicId } from "#/features/coa/services/coa.api";
 import { getFinancialYearByDate } from "#/features/fiscal-years/services/years.api";
+import {
+	type JournalEntry,
+	journalEntrySchema,
+} from "#/features/journal-entries/utils/schemas";
 import { dateFormat, normalizeText } from "#/lib/helpers";
 import {
 	areJournalValuesBalanced,
@@ -14,21 +18,44 @@ import {
 } from "#/lib/journal";
 import { failure, success } from "#/lib/result";
 import { authMiddleware } from "#/middleware/auth";
-import { type JournalEntry, journalEntrySchema } from "../utils/schemas";
 
 const JOURNAL_ENTRY_SOURCE = "Journal Entries";
 
 const journalDateInputSchema = z.iso.date().optional();
 
 const journalEntryInputSchema = z.object({
-	journalNo: z.number(),
-	date: z.iso.date().optional(),
+	publicId: z.uuid(),
 });
 
 const deleteJournalEntryInputSchema = z.object({
-	journalNo: z.number(),
-	date: z.iso.date(),
+	publicId: z.uuid(),
 });
+
+const journalSearchInputSchema = z.object({
+	dateRange: z
+		.object({
+			from: z.iso.date(),
+			to: z.iso.date(),
+		})
+		.superRefine((data, ctx) => {
+			if (new Date(data.from) > new Date(data.to)) {
+				ctx.addIssue({
+					code: "custom",
+					message: "From date must be before to date",
+					path: ["from"],
+				});
+			}
+		}),
+});
+
+export type JournalSearchInput = z.infer<typeof journalSearchInputSchema>;
+
+export type JournalSearchResult = {
+	publicId: string;
+	transactionDate: string;
+	journalNo: number;
+	amount: string;
+};
 
 const getNextJournalNo = async ({
 	congregationId,
@@ -46,16 +73,16 @@ const getNextJournalNo = async ({
 
 	const [{ journalNo } = { journalNo: null }] = await connection
 		.select({
-			journalNo: sql<number | null>`MAX(${journalEntries.journalNo})`,
+			journalNo: sql<number | null>`MAX(${journalEntriesHeaders.journalNo})`,
 		})
-		.from(journalEntries)
+		.from(journalEntriesHeaders)
 		.where(
 			and(
-				eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-				eq(journalEntries.congregationId, congregationId),
-				gte(journalEntries.transactionDate, fiscalYear.startDate),
-				lte(journalEntries.transactionDate, fiscalYear.endDate),
-				isNull(journalEntries.deletedAt),
+				eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+				eq(journalEntriesHeaders.congregationId, congregationId),
+				gte(journalEntriesHeaders.transactionDate, fiscalYear.startDate),
+				lte(journalEntriesHeaders.transactionDate, fiscalYear.endDate),
+				isNull(journalEntriesHeaders.deletedAt),
 			),
 		);
 
@@ -76,7 +103,7 @@ export const getJournalNo = createServerFn()
 		},
 	);
 
-export const upsertJournalEntries = createServerFn()
+export const upsertJournalEntries = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
 	.inputValidator(journalEntrySchema)
 	.handler(
@@ -93,10 +120,11 @@ export const upsertJournalEntries = createServerFn()
 					const accountId = await getAccountByPublicId({
 						data: line.accountId,
 					});
-					const amount =
-						line.debit && line.debit > 0 ? line.debit : (line.credit ?? 0);
-					const dc: "debit" | "credit" =
-						amount === 0 ? "debit" : line.debit ? "debit" : "credit";
+					const debit = line.debit ?? 0;
+					const credit = line.credit ?? 0;
+					const isDebit = debit > 0;
+					const amount = isDebit ? debit : credit;
+					const dc: "debit" | "credit" = isDebit ? "debit" : "credit";
 					return {
 						accountId,
 						dc,
@@ -115,7 +143,7 @@ export const upsertJournalEntries = createServerFn()
 			}
 
 			try {
-				await db.transaction(async (tx) => {
+				const result = await db.transaction(async (tx) => {
 					if (!id) {
 						const journalNo = await getNextJournalNo({
 							congregationId,
@@ -123,28 +151,29 @@ export const upsertJournalEntries = createServerFn()
 							tx,
 						});
 						await createJournalEntry({
-							congregationId,
-							transactionDate: date,
-							journalNo,
-							source: {
+							entry: {
+								congregationId,
+								transactionDate: date,
+								journalNo,
 								source: JOURNAL_ENTRY_SOURCE,
 								sourceId: journalNo.toString(),
 							},
 							lines: formattedJournalLines,
 							tx,
 						});
+						return success(undefined);
 					} else {
-						const fiscalYear = await getFinancialYearByDate({ data: date });
-						const journalEntry = await tx.query.journalEntries.findFirst({
-							where: and(
-								eq(journalEntries.journalNo, +id),
-								eq(journalEntries.congregationId, congregationId),
-								eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-								gte(journalEntries.transactionDate, fiscalYear.startDate),
-								lte(journalEntries.transactionDate, fiscalYear.endDate),
-								isNull(journalEntries.deletedAt),
-							),
-						});
+						const journalEntry = await tx.query.journalEntriesHeaders.findFirst(
+							{
+								columns: { id: true, journalNo: true, transactionDate: true },
+								where: and(
+									eq(journalEntriesHeaders.publicId, id),
+									eq(journalEntriesHeaders.congregationId, congregationId),
+									eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+									isNull(journalEntriesHeaders.deletedAt),
+								),
+							},
+						);
 
 						if (!journalEntry) {
 							return failure({
@@ -153,34 +182,43 @@ export const upsertJournalEntries = createServerFn()
 							});
 						}
 
-						await tx
-							.delete(journalEntries)
-							.where(
-								and(
-									eq(journalEntries.journalNo, +id),
-									eq(journalEntries.congregationId, congregationId),
-									eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-									gte(journalEntries.transactionDate, fiscalYear.startDate),
-									lte(journalEntries.transactionDate, fiscalYear.endDate),
-									isNull(journalEntries.deletedAt),
-								),
-							);
+						const [currentFiscalYear, updatedFiscalYear] = await Promise.all([
+							getFinancialYearByDate({
+								data: journalEntry.transactionDate,
+							}),
+							getFinancialYearByDate({ data: date }),
+						]);
+						const movedFiscalYears =
+							currentFiscalYear.startDate !== updatedFiscalYear.startDate ||
+							currentFiscalYear.endDate !== updatedFiscalYear.endDate;
+						const journalNo = movedFiscalYears
+							? await getNextJournalNo({ congregationId, date, tx })
+							: journalEntry.journalNo;
 
-						await createJournalEntry({
-							congregationId,
-							transactionDate: date,
-							journalNo: +id,
-							source: {
-								source: JOURNAL_ENTRY_SOURCE,
-								sourceId: id.toString(),
-							},
-							lines: formattedJournalLines,
-							tx,
-						});
+						await tx
+							.update(journalEntriesHeaders)
+							.set({
+								transactionDate: date,
+								journalNo,
+								sourceId: journalNo?.toString(),
+							})
+							.where(eq(journalEntriesHeaders.id, journalEntry.id));
+
+						await tx
+							.delete(journalEntryLines)
+							.where(eq(journalEntryLines.journalId, journalEntry.id));
+
+						await tx.insert(journalEntryLines).values(
+							formattedJournalLines.map((line) => ({
+								...line,
+								journalId: journalEntry.id,
+							})),
+						);
+						return success(undefined);
 					}
 				});
 
-				return success(undefined);
+				return result;
 			} catch (error) {
 				console.error(error);
 				return failure({
@@ -196,38 +234,46 @@ export const getJournalEntries = createServerFn()
 	.inputValidator(journalEntryInputSchema)
 	.handler(
 		async ({
-			data: { journalNo, date },
+			data: { publicId },
 			context: {
 				user: { congregationId },
 			},
 		}) => {
-			const fiscalYear = await getFinancialYearByDate({
-				data: date ?? dateFormat(new Date()),
-			});
-			const journalEntry = await db.query.journalEntries.findMany({
-				columns: { source: false, sourceId: false, deletedAt: false },
+			const journalEntry = await db.query.journalEntriesHeaders.findFirst({
+				columns: {
+					publicId: true,
+					transactionDate: true,
+					journalNo: true,
+				},
 				where: and(
-					eq(journalEntries.journalNo, journalNo),
-					eq(journalEntries.congregationId, congregationId),
-					eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-					gte(journalEntries.transactionDate, fiscalYear.startDate),
-					lte(journalEntries.transactionDate, fiscalYear.endDate),
-					isNull(journalEntries.deletedAt),
+					eq(journalEntriesHeaders.publicId, publicId),
+					eq(journalEntriesHeaders.congregationId, congregationId),
+					eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+					isNull(journalEntriesHeaders.deletedAt),
 				),
 				with: {
-					account: { columns: { publicId: true } },
+					lines: {
+						orderBy: (lines, { asc }) => [asc(lines.lineNumber)],
+						with: {
+							account: { columns: { publicId: true } },
+						},
+					},
 				},
 			});
 
-			if (journalEntry.length === 0 || !journalEntry[0].journalNo) {
+			if (
+				!journalEntry ||
+				!journalEntry.journalNo ||
+				journalEntry.lines.length === 0
+			) {
 				throw notFound();
 			}
 
 			return {
-				date: journalEntry[0].transactionDate,
-				id: journalEntry[0].journalNo.toString(),
-				journalNo: journalEntry[0].journalNo,
-				journalLines: journalEntry.map((line) => ({
+				date: journalEntry.transactionDate,
+				id: journalEntry.publicId,
+				journalNo: journalEntry.journalNo,
+				journalLines: journalEntry.lines.map((line) => ({
 					id: line.id.toString(),
 					accountId: line.account.publicId,
 					debit: line.dc === "debit" ? +line.amount : undefined,
@@ -238,26 +284,73 @@ export const getJournalEntries = createServerFn()
 		},
 	);
 
-export const deleteJournalEntry = createServerFn()
+export const searchJournalEntries = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(deleteJournalEntryInputSchema)
+	.inputValidator(journalSearchInputSchema)
 	.handler(
 		async ({
-			data: { journalNo, date },
+			data: {
+				dateRange: { from, to },
+			},
 			context: {
 				user: { congregationId },
 			},
 		}) => {
-			const fiscalYear = await getFinancialYearByDate({ data: date });
-			const journal = await db.query.journalEntries.findFirst({
-				columns: { journalNo: true },
+			const rows = await db
+				.select({
+					publicId: journalEntriesHeaders.publicId,
+					transactionDate: journalEntriesHeaders.transactionDate,
+					journalNo: journalEntriesHeaders.journalNo,
+					amount: sql<string>`COALESCE(SUM(CASE WHEN ${journalEntryLines.dc} = 'debit' THEN ${journalEntryLines.amount} ELSE 0 END), 0)`,
+				})
+				.from(journalEntriesHeaders)
+				.innerJoin(
+					journalEntryLines,
+					eq(journalEntriesHeaders.id, journalEntryLines.journalId),
+				)
+				.where(
+					and(
+						eq(journalEntriesHeaders.congregationId, congregationId),
+						eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+						gte(journalEntriesHeaders.transactionDate, from),
+						lte(journalEntriesHeaders.transactionDate, to),
+						isNull(journalEntriesHeaders.deletedAt),
+					),
+				)
+				.groupBy(
+					journalEntriesHeaders.id,
+					journalEntriesHeaders.publicId,
+					journalEntriesHeaders.transactionDate,
+					journalEntriesHeaders.journalNo,
+				)
+				.orderBy(
+					desc(journalEntriesHeaders.transactionDate),
+					desc(journalEntriesHeaders.journalNo),
+				);
+
+			return rows.filter(
+				(row): row is JournalSearchResult => row.journalNo !== null,
+			);
+		},
+	);
+
+export const deleteJournalEntry = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.inputValidator(deleteJournalEntryInputSchema)
+	.handler(
+		async ({
+			data: { publicId },
+			context: {
+				user: { congregationId },
+			},
+		}) => {
+			const journal = await db.query.journalEntriesHeaders.findFirst({
+				columns: { id: true },
 				where: and(
-					eq(journalEntries.journalNo, journalNo),
-					eq(journalEntries.congregationId, congregationId),
-					eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-					gte(journalEntries.transactionDate, fiscalYear.startDate),
-					lte(journalEntries.transactionDate, fiscalYear.endDate),
-					isNull(journalEntries.deletedAt),
+					eq(journalEntriesHeaders.publicId, publicId),
+					eq(journalEntriesHeaders.congregationId, congregationId),
+					eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+					isNull(journalEntriesHeaders.deletedAt),
 				),
 			});
 
@@ -269,15 +362,13 @@ export const deleteJournalEntry = createServerFn()
 			}
 
 			await db
-				.delete(journalEntries)
+				.delete(journalEntriesHeaders)
 				.where(
 					and(
-						eq(journalEntries.journalNo, journalNo),
-						eq(journalEntries.congregationId, congregationId),
-						eq(journalEntries.source, JOURNAL_ENTRY_SOURCE),
-						gte(journalEntries.transactionDate, fiscalYear.startDate),
-						lte(journalEntries.transactionDate, fiscalYear.endDate),
-						isNull(journalEntries.deletedAt),
+						eq(journalEntriesHeaders.id, journal.id),
+						eq(journalEntriesHeaders.congregationId, congregationId),
+						eq(journalEntriesHeaders.source, JOURNAL_ENTRY_SOURCE),
+						isNull(journalEntriesHeaders.deletedAt),
 					),
 				);
 
