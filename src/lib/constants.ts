@@ -144,7 +144,8 @@ export const MENU_ITEMS: Array<MenuItem> = [
 			{
 				icon: FileSpreadsheetIcon,
 				label: "Journal Entries",
-				href: "/",
+				href: "/finance/journal-entries",
+				activeOptions: { exact: false },
 			},
 			{
 				icon: LandmarkIcon,

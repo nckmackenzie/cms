@@ -119,10 +119,13 @@ const createReceipt = async (
 			);
 
 			await createJournalEntry({
-				congregationId,
-				transactionDate: data.contributionDate,
+				entry: {
+					congregationId,
+					transactionDate: data.contributionDate,
+					source: "Receipts",
+					sourceId: header[0].id.toString(),
+				},
 				lines: journalLines,
-				source: { source: "Receipts", sourceId: header[0].id.toString() },
 				tx,
 			});
 
@@ -226,10 +229,13 @@ const updateReceipt = async (
 			});
 
 			await createJournalEntry({
-				congregationId,
-				transactionDate: data.contributionDate,
+				entry: {
+					congregationId,
+					transactionDate: data.contributionDate,
+					source: "Receipts",
+					sourceId: receipt.id.toString(),
+				},
 				lines: journalLines,
-				source: { source: "Receipts", sourceId: receipt.id.toString() },
 				tx,
 			});
 

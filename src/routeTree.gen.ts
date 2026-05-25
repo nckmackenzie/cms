@@ -25,6 +25,7 @@ import { Route as authedFinanceExpensesRouteRouteImport } from './routes/(authed
 import { Route as authedFinanceBudgetsRouteRouteImport } from './routes/(authed)/finance.budgets.route'
 import { Route as authedFinanceReceiptsIndexRouteImport } from './routes/(authed)/finance.receipts.index'
 import { Route as authedFinancePettyCashIndexRouteImport } from './routes/(authed)/finance.petty-cash.index'
+import { Route as authedFinanceJournalEntriesIndexRouteImport } from './routes/(authed)/finance.journal-entries.index'
 import { Route as authedFinanceFundRequisitionsIndexRouteImport } from './routes/(authed)/finance.fund-requisitions.index'
 import { Route as authedFinanceExpensesIndexRouteImport } from './routes/(authed)/finance.expenses.index'
 import { Route as authedFinanceBudgetsIndexRouteImport } from './routes/(authed)/finance.budgets.index'
@@ -128,6 +129,12 @@ const authedFinancePettyCashIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => authedFinancePettyCashRouteRoute,
+  } as any)
+const authedFinanceJournalEntriesIndexRoute =
+  authedFinanceJournalEntriesIndexRouteImport.update({
+    id: '/journal-entries/',
+    path: '/journal-entries/',
+    getParentRoute: () => authedFinanceRouteRoute,
   } as any)
 const authedFinanceFundRequisitionsIndexRoute =
   authedFinanceFundRequisitionsIndexRouteImport.update({
@@ -242,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/finance/budgets/': typeof authedFinanceBudgetsIndexRoute
   '/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
+  '/finance/journal-entries/': typeof authedFinanceJournalEntriesIndexRoute
   '/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
   '/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/finance/budgets': typeof authedFinanceBudgetsIndexRoute
   '/finance/expenses': typeof authedFinanceExpensesIndexRoute
   '/finance/fund-requisitions': typeof authedFinanceFundRequisitionsIndexRoute
+  '/finance/journal-entries': typeof authedFinanceJournalEntriesIndexRoute
   '/finance/petty-cash': typeof authedFinancePettyCashIndexRoute
   '/finance/receipts': typeof authedFinanceReceiptsIndexRoute
   '/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
@@ -303,6 +312,7 @@ export interface FileRoutesById {
   '/(authed)/finance/budgets/': typeof authedFinanceBudgetsIndexRoute
   '/(authed)/finance/expenses/': typeof authedFinanceExpensesIndexRoute
   '/(authed)/finance/fund-requisitions/': typeof authedFinanceFundRequisitionsIndexRoute
+  '/(authed)/finance/journal-entries/': typeof authedFinanceJournalEntriesIndexRoute
   '/(authed)/finance/petty-cash/': typeof authedFinancePettyCashIndexRoute
   '/(authed)/finance/receipts/': typeof authedFinanceReceiptsIndexRoute
   '/(authed)/finance/budgets/$budgetId/edit': typeof authedFinanceBudgetsBudgetIdEditRoute
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/finance/budgets/'
     | '/finance/expenses/'
     | '/finance/fund-requisitions/'
+    | '/finance/journal-entries/'
     | '/finance/petty-cash/'
     | '/finance/receipts/'
     | '/finance/budgets/$budgetId/edit'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/finance/budgets'
     | '/finance/expenses'
     | '/finance/fund-requisitions'
+    | '/finance/journal-entries'
     | '/finance/petty-cash'
     | '/finance/receipts'
     | '/finance/budgets/$budgetId/edit'
@@ -397,6 +409,7 @@ export interface FileRouteTypes {
     | '/(authed)/finance/budgets/'
     | '/(authed)/finance/expenses/'
     | '/(authed)/finance/fund-requisitions/'
+    | '/(authed)/finance/journal-entries/'
     | '/(authed)/finance/petty-cash/'
     | '/(authed)/finance/receipts/'
     | '/(authed)/finance/budgets/$budgetId/edit'
@@ -529,6 +542,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finance/petty-cash/'
       preLoaderRoute: typeof authedFinancePettyCashIndexRouteImport
       parentRoute: typeof authedFinancePettyCashRouteRoute
+    }
+    '/(authed)/finance/journal-entries/': {
+      id: '/(authed)/finance/journal-entries/'
+      path: '/journal-entries'
+      fullPath: '/finance/journal-entries/'
+      preLoaderRoute: typeof authedFinanceJournalEntriesIndexRouteImport
+      parentRoute: typeof authedFinanceRouteRoute
     }
     '/(authed)/finance/fund-requisitions/': {
       id: '/(authed)/finance/fund-requisitions/'
@@ -761,6 +781,7 @@ interface authedFinanceRouteRouteChildren {
   authedFinanceReceiptsRouteRoute: typeof authedFinanceReceiptsRouteRouteWithChildren
   authedFinanceChartOfAccountsRoute: typeof authedFinanceChartOfAccountsRoute
   authedFinanceDashboardRoute: typeof authedFinanceDashboardRoute
+  authedFinanceJournalEntriesIndexRoute: typeof authedFinanceJournalEntriesIndexRoute
 }
 
 const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
@@ -773,6 +794,7 @@ const authedFinanceRouteRouteChildren: authedFinanceRouteRouteChildren = {
   authedFinanceReceiptsRouteRoute: authedFinanceReceiptsRouteRouteWithChildren,
   authedFinanceChartOfAccountsRoute: authedFinanceChartOfAccountsRoute,
   authedFinanceDashboardRoute: authedFinanceDashboardRoute,
+  authedFinanceJournalEntriesIndexRoute: authedFinanceJournalEntriesIndexRoute,
 }
 
 const authedFinanceRouteRouteWithChildren =

@@ -47,6 +47,7 @@ interface DataTableProps<TData, TValue> {
 	customFooter?: React.ReactNode;
 	exportToExcel?: boolean;
 	exportFileName?: string;
+	onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -57,6 +58,7 @@ export function DataTable<TData, TValue>({
 	customFooter,
 	exportToExcel = false,
 	exportFileName = "datatable-export.csv",
+	onRowClick,
 }: DataTableProps<TData, TValue>) {
 	const [sorting, setSorting] = React.useState<SortingState>([]);
 	const { exportToCsv } = useExportToCsv();
@@ -199,6 +201,30 @@ export function DataTable<TData, TValue>({
 								<TableRow
 									key={row.id}
 									data-state={row.getIsSelected() && "selected"}
+									onClick={(event) => {
+										if (!onRowClick) return;
+										const target = event.target as HTMLElement;
+										if (
+											target.closest(
+												"button,a,input,select,textarea,[role='button']",
+											)
+										) {
+											return;
+										}
+										onRowClick(row.original);
+									}}
+									onKeyDown={(event) => {
+										if (!onRowClick) return;
+										if (event.key === "Enter" || event.key === " ") {
+											event.preventDefault();
+											onRowClick(row.original);
+										}
+									}}
+									tabIndex={onRowClick ? 0 : undefined}
+									className={cn(
+										onRowClick &&
+											"cursor-pointer hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+									)}
 								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell

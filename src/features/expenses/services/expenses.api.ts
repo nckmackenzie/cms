@@ -976,9 +976,12 @@ export const approveExpense = createServerFn({ method: "POST" })
 					}
 
 					await createJournalEntry({
-						source: { source: "Expenses", sourceId: expense.id.toString() },
-						transactionDate: expense.expenseDate,
-						congregationId,
+						entry: {
+							transactionDate: expense.expenseDate,
+							congregationId,
+							source: "Expenses",
+							sourceId: expense.id.toString(),
+						},
 						lines: journalLines,
 						tx,
 					});
