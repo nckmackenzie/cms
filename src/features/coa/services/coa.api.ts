@@ -365,7 +365,7 @@ export const getTransactionJournal = createServerFn()
 						isNull(journalEntriesHeaders.deletedAt),
 					),
 				)
-				.orderBy(asc(journalEntryLines.dc), asc(journalEntryLines.lineNumber));
+				.orderBy(asc(journalEntryLines.lineNumber), asc(journalEntryLines.id));
 
 			if (data.length === 0) {
 				throw new Error("Transaction journal not found");
