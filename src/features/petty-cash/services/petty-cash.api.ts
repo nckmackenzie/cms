@@ -100,7 +100,7 @@ const getPettyCashReceiptNo = async ({
 
 export const getPettyCashReceipts = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(pettyCashValidateSearch)
+	.validator(pettyCashValidateSearch)
 	.handler(
 		async ({
 			data: { search, dateRange },
@@ -163,7 +163,7 @@ export const getPettyCashReceipts = createServerFn()
 
 export const getPettyCashReceipt = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((pettyCashId: string) => pettyCashId)
+	.validator((pettyCashId: string) => pettyCashId)
 	.handler(
 		async ({
 			data: pettyCashId,
@@ -404,7 +404,7 @@ const updatePettyCashReceipt = async (
 
 export const upsertPettyCashReceipt = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(pettyCashFormSchema)
+	.validator(pettyCashFormSchema)
 	.handler(
 		async ({
 			data,
@@ -425,7 +425,7 @@ export const upsertPettyCashReceipt = createServerFn({ method: "POST" })
 
 export const deletePettyCashReceipt = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Petty cash receipt is required"))
+	.validator(stringSchema("Petty cash receipt is required"))
 	.handler(
 		async ({
 			data,

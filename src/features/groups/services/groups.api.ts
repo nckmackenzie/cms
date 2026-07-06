@@ -6,7 +6,7 @@ import { authMiddleware } from "#/middleware/auth";
 
 export const getGroupIdFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((data: { publicId: string }) => data)
+	.validator((data: { publicId: string }) => data)
 	.handler(
 		async ({
 			data,

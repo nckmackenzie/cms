@@ -373,7 +373,7 @@ const getReceiptNo = async ({
 
 export const getReceiptNoServerFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string().optional())
+	.validator(z.string().optional())
 	.handler(
 		async ({
 			context: {
@@ -390,7 +390,7 @@ export const getReceiptNoServerFn = createServerFn()
 
 export const getReceipts = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(receiptsValidateSearch)
+	.validator(receiptsValidateSearch)
 	.handler(
 		async ({
 			data: { search, dateRange },
@@ -455,7 +455,7 @@ export const getReceipts = createServerFn()
 
 export const getReceipt = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((receiptId: string) => receiptId)
+	.validator((receiptId: string) => receiptId)
 	.handler(
 		async ({
 			data: receiptId,
@@ -517,7 +517,7 @@ export const getReceipt = createServerFn()
 
 export const upsertReceipt = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(receiptsFormSchema)
+	.validator(receiptsFormSchema)
 	.handler(
 		async ({
 			data,

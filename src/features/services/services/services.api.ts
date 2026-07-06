@@ -30,7 +30,7 @@ export const getCongregationServices = createServerFn()
 
 export const getServiceByPublicId = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Service Id is required"))
+	.validator(stringSchema("Service Id is required"))
 	.handler(
 		async ({
 			data,
