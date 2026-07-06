@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "#/db";
 import { services } from "#/db/schema";
+import { resolveIdByPublicId } from "#/lib/db-helpers";
 import { stringSchema } from "#/lib/schemas";
 import { authMiddleware } from "#/middleware/auth";
 
@@ -38,19 +39,14 @@ export const getServiceByPublicId = createServerFn()
 				user: { congregationId },
 			},
 		}) => {
-			const service = await db.query.services.findFirst({
-				columns: { id: true },
-				where: and(
+			return resolveIdByPublicId(
+				services,
+				and(
 					eq(services.congregationId, congregationId),
 					eq(services.publicId, data),
 					isNull(services.deletedAt),
 				),
-			});
-
-			if (!service) {
-				throw new Error("Service not found");
-			}
-
-			return service.id;
+				"Service",
+			);
 		},
 	);

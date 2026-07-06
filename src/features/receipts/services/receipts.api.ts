@@ -126,20 +126,20 @@ const createReceipt = async (
 	congregationId: number,
 	userId: number,
 ) => {
-	const [resolvedDetails, bank] = await Promise.all([
-		resolveIncomeReferences(data.details),
-		data.bankId
-			? getAccountByPublicId({ data: data.bankId })
-			: Promise.resolve(null),
-	]);
-
-	const { journalLines, totalAmount } = await buildReceiptJournalLines(
-		data,
-		resolvedDetails,
-		congregationId,
-	);
-
 	try {
+		const [resolvedDetails, bank] = await Promise.all([
+			resolveIncomeReferences(data.details),
+			data.bankId
+				? getAccountByPublicId({ data: data.bankId })
+				: Promise.resolve(null),
+		]);
+
+		const { journalLines, totalAmount } = await buildReceiptJournalLines(
+			data,
+			resolvedDetails,
+			congregationId,
+		);
+
 		await db.transaction(async (tx) => {
 			const receiptNo = await getReceiptNo({
 				congregationId,
@@ -195,7 +195,7 @@ const createReceipt = async (
 				await createBankingEntry({
 					entry: {
 						bankId: bank,
-						amount: totalAmount.toString(),
+						amount: toDecimalString(totalAmount),
 						dc: "debit" as DebitCredit,
 						congregationId,
 						transactionDate: data.contributionDate,
@@ -241,20 +241,20 @@ const updateReceipt = async (
 		});
 	}
 
-	const [resolvedDetails, bank] = await Promise.all([
-		resolveIncomeReferences(data.details),
-		data.bankId
-			? getAccountByPublicId({ data: data.bankId })
-			: Promise.resolve(null),
-	]);
-
-	const { journalLines, totalAmount } = await buildReceiptJournalLines(
-		data,
-		resolvedDetails,
-		congregationId,
-	);
-
 	try {
+		const [resolvedDetails, bank] = await Promise.all([
+			resolveIncomeReferences(data.details),
+			data.bankId
+				? getAccountByPublicId({ data: data.bankId })
+				: Promise.resolve(null),
+		]);
+
+		const { journalLines, totalAmount } = await buildReceiptJournalLines(
+			data,
+			resolvedDetails,
+			congregationId,
+		);
+
 		await db.transaction(async (tx) => {
 			await tx
 				.update(receiptHeader)
@@ -321,7 +321,7 @@ const updateReceipt = async (
 				await createBankingEntry({
 					entry: {
 						bankId: bank as number,
-						amount: totalAmount.toString(),
+						amount: toDecimalString(totalAmount),
 						dc: "debit" as DebitCredit,
 						congregationId,
 						transactionDate: data.contributionDate,

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "#/db";
 import { groups } from "#/db/schema";
+import { resolveIdByPublicId } from "#/lib/db-helpers";
 import { authMiddleware } from "#/middleware/auth";
 
 export const getGroupIdFn = createServerFn()
@@ -9,27 +10,20 @@ export const getGroupIdFn = createServerFn()
 	.validator((data: { publicId: string }) => data)
 	.handler(
 		async ({
-			data,
+			data: { publicId },
 			context: {
 				user: { congregationId },
 			},
 		}) => {
-			const { publicId } = data;
-			const [result] = await db
-				.select({ id: groups.id })
-				.from(groups)
-				.where(
-					and(
-						eq(groups.publicId, publicId),
-						isNull(groups.deletedAt),
-						eq(groups.congregationId, congregationId),
-					),
-				)
-				.limit(1);
-			if (!result) {
-				throw new Error("Group not found");
-			}
-			return result.id;
+			return resolveIdByPublicId(
+				groups,
+				and(
+					eq(groups.publicId, publicId),
+					isNull(groups.deletedAt),
+					eq(groups.congregationId, congregationId),
+				),
+				"Group",
+			);
 		},
 	);
 

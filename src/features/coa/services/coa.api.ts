@@ -13,6 +13,7 @@ import {
 	coaValidateSearch,
 } from "#/features/coa/utils/schemas";
 import { SOURCES } from "#/lib/constants";
+import { resolveIdByPublicId } from "#/lib/db-helpers";
 import { failure, success } from "#/lib/result";
 import { toTitleCase } from "#/lib/utils";
 import { authMiddleware } from "#/middleware/auth";
@@ -313,14 +314,11 @@ export const getAccountByPublicId = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
 	.validator((data: string) => data)
 	.handler(async ({ data }) => {
-		const account = await db.query.ledgerAccounts.findFirst({
-			columns: { id: true },
-			where: eq(ledgerAccounts.publicId, data),
-		});
-		if (!account) {
-			throw new Error("Account not found");
-		}
-		return account.id;
+		return resolveIdByPublicId(
+			ledgerAccounts,
+			eq(ledgerAccounts.publicId, data),
+			"Account",
+		);
 	});
 
 export const getTransactionJournal = createServerFn()
