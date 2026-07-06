@@ -91,7 +91,7 @@ const getNextJournalNo = async ({
 
 export const getJournalNo = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(journalDateInputSchema)
+	.validator(journalDateInputSchema)
 	.handler(
 		async ({
 			data: date,
@@ -105,7 +105,7 @@ export const getJournalNo = createServerFn()
 
 export const upsertJournalEntries = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(journalEntrySchema)
+	.validator(journalEntrySchema)
 	.handler(
 		async ({
 			data,
@@ -231,7 +231,7 @@ export const upsertJournalEntries = createServerFn({ method: "POST" })
 
 export const getJournalEntries = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(journalEntryInputSchema)
+	.validator(journalEntryInputSchema)
 	.handler(
 		async ({
 			data: { publicId },
@@ -286,7 +286,7 @@ export const getJournalEntries = createServerFn()
 
 export const searchJournalEntries = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(journalSearchInputSchema)
+	.validator(journalSearchInputSchema)
 	.handler(
 		async ({
 			data: {
@@ -336,7 +336,7 @@ export const searchJournalEntries = createServerFn()
 
 export const deleteJournalEntry = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(deleteJournalEntryInputSchema)
+	.validator(deleteJournalEntryInputSchema)
 	.handler(
 		async ({
 			data: { publicId },

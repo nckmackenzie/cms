@@ -1,9 +1,11 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <> */
 
+import Big from "big.js";
 import { format } from "date-fns";
 
 type DiscountType = "percentage" | "amount";
 type VatType = "none" | "inclusive" | "exclusive";
+type NumericValue = string | number | Big | null | undefined;
 
 type DateRangeString = { from: string; to: string };
 type DateRangeDate = { from: Date; to: Date };
@@ -200,13 +202,44 @@ export function percentageChangeCalculator(current: number, previous: number) {
 	};
 }
 
+export function toBig(value: NumericValue) {
+	if (value === null || value === undefined || value === "") {
+		return new Big(0);
+	}
+
+	try {
+		return new Big(value);
+	} catch {
+		return new Big(0);
+	}
+}
+
+export function toNullableNumber(value: NumericValue): number | null {
+	if (value === null || value === undefined || value === "") {
+		return null;
+	}
+
+	try {
+		return new Big(value).toNumber();
+	} catch {
+		return null;
+	}
+}
+
+export function toDecimalString(value: NumericValue, decimals = 2) {
+	return toBig(value).round(decimals, Big.roundHalfUp).toFixed(decimals);
+}
+
+export function toDecimalNumber(value: NumericValue, decimals = 2) {
+	return Number(toDecimalString(value, decimals));
+}
+
 export function percentage(partialValue: number, totalValue: number) {
 	const result = (100 * partialValue) / totalValue;
 	return Number.isFinite(result) ? result : 0;
 }
-export const toNumber = (value: unknown) => {
-	const n = Number.parseFloat(String(value ?? "0"));
-	return Number.isFinite(n) ? n : 0;
+export const toNumber = (value: NumericValue) => {
+	return toBig(value).toNumber();
 };
 
 export function normalizeText(value: string | null | undefined): string | null {

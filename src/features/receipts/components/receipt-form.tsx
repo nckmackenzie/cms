@@ -31,14 +31,13 @@ import {
 } from "#/features/receipts/utils/schema";
 import { useAppForm } from "#/hooks/form";
 import { useFormUpsert } from "#/hooks/use-form-upsert";
+import { nullableTrimmedString, stringSchema } from "#/lib/schemas";
 import { cn, toTitleCase } from "#/lib/utils";
 import { currencyFormatter, dateFormat } from "@/lib/helpers";
 
 const CATEGORIES = [
-	// { value: "member", label: "Member" },
 	{ value: "group", label: "Group" },
 	{ value: "district", label: "District" },
-	// { value: "congregation", label: "Congregation" },
 	{ value: "service", label: "Service" },
 ];
 
@@ -185,7 +184,6 @@ export function ReceiptsForm({
 									disabled={paymentMethod === "cash"}
 									label="Bank"
 									values={bankAccounts}
-									isNumber
 								/>
 							)}
 						</form.AppField>
@@ -224,12 +222,12 @@ type AddReceiptlineProps = {
 const detailsSchema = z.object({
 	id: z.string(),
 	category: z.enum(["district", "group", "service", "member", "congregation"]),
-	contributorDistrictId: z.number().nullish(),
-	contributorGroupId: z.number().nullish(),
-	contributorServiceId: z.number().nullish(),
-	accountId: z.number().min(1, "Account is required"),
+	contributorDistrictId: nullableTrimmedString,
+	contributorGroupId: nullableTrimmedString,
+	contributorServiceId: nullableTrimmedString,
+	accountId: stringSchema("Account is required"),
 	amount: z.number().positive({ error: "Amount must be positive" }),
-	narration: z.string().optional(),
+	narration: nullableTrimmedString,
 });
 
 function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
@@ -244,7 +242,7 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 			contributorDistrictId: null,
 			contributorGroupId: null,
 			contributorServiceId: null,
-			accountId: 0,
+			accountId: "",
 			amount: 0,
 			reference: "",
 			narration: "",
@@ -261,16 +259,16 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 
 	useEffect(() => {
 		if (category === "district") {
-			form.setFieldValue("contributorGroupId", undefined);
-			form.setFieldValue("contributorServiceId", undefined);
+			form.setFieldValue("contributorGroupId", null);
+			form.setFieldValue("contributorServiceId", null);
 		}
 		if (category === "group") {
-			form.setFieldValue("contributorDistrictId", undefined);
-			form.setFieldValue("contributorServiceId", undefined);
+			form.setFieldValue("contributorDistrictId", null);
+			form.setFieldValue("contributorServiceId", null);
 		}
 		if (category === "service") {
-			form.setFieldValue("contributorDistrictId", undefined);
-			form.setFieldValue("contributorGroupId", undefined);
+			form.setFieldValue("contributorDistrictId", null);
+			form.setFieldValue("contributorGroupId", null);
 		}
 	}, [form, category]);
 
@@ -288,7 +286,6 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 					{(field) => (
 						<field.Select
 							label="Account"
-							isNumber
 							values={accounts.map(({ value, label }) => ({
 								value: value.toString(),
 								label,
@@ -304,9 +301,8 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 						{(field) => (
 							<field.Select
 								label="District"
-								isNumber
 								values={districts.map(({ value, label }) => ({
-									value: value.toString(),
+									value: value,
 									label: toTitleCase(label),
 								}))}
 							/>
@@ -318,9 +314,8 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 						{(field) => (
 							<field.Select
 								label="Group"
-								isNumber
 								values={groups.map(({ value, label }) => ({
-									value: value.toString(),
+									value: value,
 									label: toTitleCase(label),
 								}))}
 							/>
@@ -332,9 +327,8 @@ function AddReceiptline({ onAddLine }: AddReceiptlineProps) {
 						{(field) => (
 							<field.Select
 								label="Service"
-								isNumber
 								values={services.map(({ value, label }) => ({
-									value: value.toString(),
+									value: value,
 									label: toTitleCase(label),
 								}))}
 							/>
@@ -381,20 +375,18 @@ function Detail({
 		from: "/(authed)/finance/receipts",
 	});
 	const accountLabel =
-		accounts.find((account) => Number(account.value) === detail.accountId)
-			?.label ?? "—";
+		accounts.find((account) => account.value === detail.accountId)?.label ??
+		"—";
 	const contributor = useMemo(() => {
 		if (detail.category === "district") {
-			return districts.find(
-				(d) => Number(d.value) === detail.contributorDistrictId,
-			)?.label;
-		}
-		if (detail.category === "group") {
-			return groups.find((g) => Number(g.value) === detail.contributorGroupId)
+			return districts.find((d) => d.value === detail.contributorDistrictId)
 				?.label;
 		}
+		if (detail.category === "group") {
+			return groups.find((g) => g.value === detail.contributorGroupId)?.label;
+		}
 		if (detail.category === "service") {
-			return services.find((s) => Number(s.value) === detail.contributorServiceId)
+			return services.find((s) => s.value === detail.contributorServiceId)
 				?.label;
 		}
 		return "—";

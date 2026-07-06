@@ -136,7 +136,7 @@ export const areJournalValuesBalanced = (
 type CashEquivalentAccountIdParams = {
 	paymentMethod: schema.PaymentMethod;
 	congregationId: number;
-	bankId?: number;
+	bankId?: string;
 };
 
 export const getCashEquivalentAccountId = async ({
@@ -160,7 +160,7 @@ export const getCashEquivalentAccountId = async ({
 			.from(ledgerAccounts)
 			.where(
 				and(
-					eq(ledgerAccounts.id, bankId),
+					eq(ledgerAccounts.publicId, bankId),
 					eq(ledgerAccounts.congregationId, congregationId),
 					eq(ledgerAccounts.active, true),
 					isNull(ledgerAccounts.deletedAt),

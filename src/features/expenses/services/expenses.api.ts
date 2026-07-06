@@ -107,7 +107,7 @@ const getVoucherNo = async ({
 
 export const voucherNoFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string().optional())
+	.validator(z.string().optional())
 	.handler(
 		async ({
 			data: date,
@@ -642,7 +642,7 @@ const updateExpense = async (
 };
 
 export const getExpenses = createServerFn()
-	.inputValidator(expensesPageValidateSearch)
+	.validator(expensesPageValidateSearch)
 	.middleware([authMiddleware])
 	.handler(
 		async ({
@@ -735,7 +735,7 @@ export const getExpenses = createServerFn()
 	);
 
 export const getAvailableRequisitionsForExpense = createServerFn()
-	.inputValidator(availableExpenseRequisitionsSchema)
+	.validator(availableExpenseRequisitionsSchema)
 	.middleware([authMiddleware])
 	.handler(
 		async ({
@@ -754,7 +754,7 @@ export const getAvailableRequisitionsForExpense = createServerFn()
 	);
 
 export const getExpenseRequisitionOption = createServerFn()
-	.inputValidator(stringSchema("Provide requisition"))
+	.validator(stringSchema("Provide requisition"))
 	.middleware([authMiddleware])
 	.handler(
 		async ({
@@ -772,7 +772,7 @@ export const getExpenseRequisitionOption = createServerFn()
 
 export const getExpenseByPublicId = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Expense ID is required"))
+	.validator(stringSchema("Expense ID is required"))
 	.handler(
 		async ({
 			data,
@@ -827,7 +827,7 @@ export const getExpenseByPublicId = createServerFn()
 
 export const deleteExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Expense ID is required"))
+	.validator(stringSchema("Expense ID is required"))
 	.handler(
 		async ({
 			data,
@@ -888,7 +888,7 @@ export const deleteExpense = createServerFn({ method: "POST" })
 
 export const approveExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide expense to approve"))
+	.validator(stringSchema("Provide expense to approve"))
 	.handler(
 		async ({
 			data,
@@ -1020,7 +1020,7 @@ export const approveExpense = createServerFn({ method: "POST" })
 
 export const unapproveExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide expense to unapprove"))
+	.validator(stringSchema("Provide expense to unapprove"))
 	.handler(
 		async ({
 			data,
@@ -1083,7 +1083,7 @@ export const unapproveExpense = createServerFn({ method: "POST" })
 
 export const upsertExpense = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(expenseFormSchema)
+	.validator(expenseFormSchema)
 	.handler(
 		async ({
 			data,

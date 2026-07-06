@@ -8,7 +8,7 @@ import { authMiddleware } from "#/middleware/auth";
 
 export const getFinancialYearByDate = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((date?: string) => date)
+	.validator((date?: string) => date)
 	.handler(async ({ data: date }) => {
 		const fiscalYear = await db.query.fiscalYears.findFirst({
 			where: and(
@@ -37,7 +37,7 @@ export const getFinancialYears = createServerFn()
 
 export const getFinancialYearById = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Year is required"))
+	.validator(stringSchema("Year is required"))
 	.handler(async ({ data: id }) => {
 		const fiscalYear = await db.query.fiscalYears.findFirst({
 			where: and(isNull(fiscalYears.deletedAt), eq(fiscalYears.publicId, id)),

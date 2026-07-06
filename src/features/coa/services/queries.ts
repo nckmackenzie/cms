@@ -33,7 +33,7 @@ export const accountQueries = {
 							account.active,
 					)
 					.map((acc) => ({
-						value: acc.id.toString(),
+						value: acc.publicId,
 						label: toTitleCase(acc.name),
 					}));
 			},

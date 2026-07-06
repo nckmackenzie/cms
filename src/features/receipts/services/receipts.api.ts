@@ -15,18 +15,22 @@ import {
 import z from "zod";
 import { db } from "#/db";
 import { type DebitCredit, receiptDetails, receiptHeader } from "#/db/schema";
+import { getAccountByPublicId } from "#/features/coa/services/coa.api";
+import { getDistrictId } from "#/features/districts/services/districts.api";
 import { getFinancialYearByDate } from "#/features/fiscal-years/services/years.api";
+import { getGroupIdFn } from "#/features/groups/services/groups.api";
 import {
 	type ReceiptsFormValues,
 	receiptsFormSchema,
 	receiptsValidateSearch,
 } from "#/features/receipts/utils/schema";
+import { getServiceByPublicId } from "#/features/services/services/services.api";
 import { createBankingEntry, deleteBankingEntry } from "#/lib/banking";
 import {
 	dateFormat,
 	normalizeDateRange,
 	normalizeText,
-	toNumber,
+	toDecimalString,
 } from "#/lib/helpers";
 import {
 	createJournalEntry,
@@ -36,20 +40,69 @@ import {
 import { failure, success } from "#/lib/result";
 import { authMiddleware } from "#/middleware/auth";
 
+type ResolvedIncomeDetail = {
+	detail: ReceiptsFormValues["details"][number];
+	accountId: number;
+	contributorGroupId: number | null;
+	contributorDistrictId: number | null;
+	contributorServiceId: number | null;
+};
+
+async function resolveIncomeReferences(
+	details: ReceiptsFormValues["details"],
+): Promise<ResolvedIncomeDetail[]> {
+	return Promise.all(
+		details.map(async (detail) => {
+			const [
+				accountId,
+				contributorDistrictId,
+				contributorGroupId,
+				contributorServiceId,
+			] = await Promise.all([
+				getAccountByPublicId({ data: detail.accountId }),
+				detail.category === "district"
+					? getDistrictId({
+							data: { publicId: detail.contributorDistrictId as string },
+						})
+					: Promise.resolve(null),
+				detail.category === "group"
+					? getGroupIdFn({
+							data: { publicId: detail.contributorGroupId as string },
+						})
+					: Promise.resolve(null),
+				detail.category === "service"
+					? getServiceByPublicId({
+							data: detail.contributorServiceId as string,
+						})
+					: Promise.resolve(null),
+			]);
+
+			return {
+				detail,
+				accountId,
+				contributorGroupId,
+				contributorDistrictId,
+				contributorServiceId,
+			};
+		}),
+	);
+}
+
 const buildReceiptJournalLines = async (
 	data: ReceiptsFormValues,
+	resolvedDetails: ResolvedIncomeDetail[],
 	congregationId: number,
 ) => {
-	const journalLines = data.details.map((detail, i) => ({
-		accountId: toNumber(detail.accountId),
-		amount: detail.amount.toString(),
+	const journalLines = resolvedDetails.map(({ detail, accountId }, i) => ({
+		accountId,
+		amount: toDecimalString(detail.amount),
 		dc: "credit" as DebitCredit,
 		lineNumber: i + 1,
 		memo: normalizeText(detail.narration),
 	}));
 
 	const totalAmount = data.details.reduce(
-		(acc, detail) => acc + parseFloat(detail.amount.toString()),
+		(acc, detail) => acc + detail.amount,
 		0,
 	);
 
@@ -59,7 +112,7 @@ const buildReceiptJournalLines = async (
 			congregationId,
 			bankId: data.bankId ?? undefined,
 		}),
-		amount: totalAmount.toString(),
+		amount: toDecimalString(totalAmount),
 		dc: "debit" as DebitCredit,
 		lineNumber: journalLines.length + 1,
 		memo: normalizeText(data.reference),
@@ -73,12 +126,20 @@ const createReceipt = async (
 	congregationId: number,
 	userId: number,
 ) => {
-	const { journalLines, totalAmount } = await buildReceiptJournalLines(
-		data,
-		congregationId,
-	);
-
 	try {
+		const [resolvedDetails, bank] = await Promise.all([
+			resolveIncomeReferences(data.details),
+			data.bankId
+				? getAccountByPublicId({ data: data.bankId })
+				: Promise.resolve(null),
+		]);
+
+		const { journalLines, totalAmount } = await buildReceiptJournalLines(
+			data,
+			resolvedDetails,
+			congregationId,
+		);
+
 		await db.transaction(async (tx) => {
 			const receiptNo = await getReceiptNo({
 				congregationId,
@@ -95,27 +156,28 @@ const createReceipt = async (
 				.returning({ id: receiptHeader.id });
 
 			await tx.insert(receiptDetails).values(
-				data.details.map((detail) => ({
-					headerId: header[0].id,
-					category: detail.category,
-					contributionAccountId: toNumber(detail.accountId),
-					amount: detail.amount.toString(),
-					paymentMethod: data.paymentMethod,
-					bankId: data.bankId,
-					// contributorMemberId:
-					// 	detail.category === "member" ? detail.contributorMemberId : null,
-					contributorGroupId:
-						detail.category === "group" ? detail.contributorGroupId : null,
-					contributorDistrictId:
-						detail.category === "district"
-							? toNumber(detail.contributorDistrictId)
-							: null,
-					contributorServiceId:
-						detail.category === "service" ? detail.contributorServiceId : null,
-					paymentReference: data.reference,
-					narration: normalizeText(detail.narration),
-					incomeType: 1,
-				})),
+				resolvedDetails.map(
+					({
+						detail,
+						accountId,
+						contributorGroupId,
+						contributorDistrictId,
+						contributorServiceId,
+					}) => ({
+						headerId: header[0].id,
+						category: detail.category,
+						contributionAccountId: accountId,
+						amount: toDecimalString(detail.amount),
+						paymentMethod: data.paymentMethod,
+						bankId: data.paymentMethod !== "cash" ? bank : null,
+						contributorGroupId,
+						contributorDistrictId,
+						contributorServiceId,
+						paymentReference: data.reference,
+						narration: normalizeText(detail.narration),
+						incomeType: 1,
+					}),
+				),
 			);
 
 			await createJournalEntry({
@@ -129,11 +191,11 @@ const createReceipt = async (
 				tx,
 			});
 
-			if (data.paymentMethod !== "cash" && data.bankId) {
+			if (data.paymentMethod !== "cash" && bank) {
 				await createBankingEntry({
 					entry: {
-						bankId: data.bankId,
-						amount: totalAmount.toString(),
+						bankId: bank,
+						amount: toDecimalString(totalAmount),
 						dc: "debit" as DebitCredit,
 						congregationId,
 						transactionDate: data.contributionDate,
@@ -179,12 +241,20 @@ const updateReceipt = async (
 		});
 	}
 
-	const { journalLines, totalAmount } = await buildReceiptJournalLines(
-		data,
-		congregationId,
-	);
-
 	try {
+		const [resolvedDetails, bank] = await Promise.all([
+			resolveIncomeReferences(data.details),
+			data.bankId
+				? getAccountByPublicId({ data: data.bankId })
+				: Promise.resolve(null),
+		]);
+
+		const { journalLines, totalAmount } = await buildReceiptJournalLines(
+			data,
+			resolvedDetails,
+			congregationId,
+		);
+
 		await db.transaction(async (tx) => {
 			await tx
 				.update(receiptHeader)
@@ -199,27 +269,28 @@ const updateReceipt = async (
 				.where(eq(receiptDetails.headerId, receipt.id));
 
 			await tx.insert(receiptDetails).values(
-				data.details.map((detail) => ({
-					headerId: receipt.id,
-					category: detail.category,
-					contributionAccountId: toNumber(detail.accountId),
-					amount: detail.amount.toString(),
-					paymentMethod: data.paymentMethod,
-					bankId: data.bankId,
-					// contributorMemberId:
-					// 	detail.category === "member" ? detail.contributorMemberId : null,
-					contributorGroupId:
-						detail.category === "group" ? detail.contributorGroupId : null,
-					contributorDistrictId:
-						detail.category === "district"
-							? toNumber(detail.contributorDistrictId)
-							: null,
-					contributorServiceId:
-						detail.category === "service" ? detail.contributorServiceId : null,
-					paymentReference: data.reference,
-					narration: normalizeText(detail.narration),
-					incomeType: 1,
-				})),
+				resolvedDetails.map(
+					({
+						detail,
+						accountId,
+						contributorGroupId,
+						contributorDistrictId,
+						contributorServiceId,
+					}) => ({
+						headerId: receipt.id,
+						category: detail.category,
+						contributionAccountId: accountId,
+						amount: toDecimalString(detail.amount),
+						paymentMethod: data.paymentMethod,
+						bankId: data.paymentMethod !== "cash" ? bank : null,
+						contributorGroupId,
+						contributorDistrictId,
+						contributorServiceId,
+						paymentReference: data.reference,
+						narration: normalizeText(detail.narration),
+						incomeType: 1,
+					}),
+				),
 			);
 
 			await deleteJournalEntry({
@@ -249,8 +320,8 @@ const updateReceipt = async (
 			if (data.paymentMethod !== "cash" && data.bankId) {
 				await createBankingEntry({
 					entry: {
-						bankId: data.bankId,
-						amount: totalAmount.toString(),
+						bankId: bank as number,
+						amount: toDecimalString(totalAmount),
 						dc: "debit" as DebitCredit,
 						congregationId,
 						transactionDate: data.contributionDate,
@@ -302,7 +373,7 @@ const getReceiptNo = async ({
 
 export const getReceiptNoServerFn = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.string().optional())
+	.validator(z.string().optional())
 	.handler(
 		async ({
 			context: {
@@ -319,7 +390,7 @@ export const getReceiptNoServerFn = createServerFn()
 
 export const getReceipts = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(receiptsValidateSearch)
+	.validator(receiptsValidateSearch)
 	.handler(
 		async ({
 			data: { search, dateRange },
@@ -384,7 +455,7 @@ export const getReceipts = createServerFn()
 
 export const getReceipt = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator((receiptId: string) => receiptId)
+	.validator((receiptId: string) => receiptId)
 	.handler(
 		async ({
 			data: receiptId,
@@ -405,7 +476,15 @@ export const getReceipt = createServerFn()
 					isNull(receiptHeader.deletedAt),
 				),
 				with: {
-					details: true,
+					details: {
+						with: {
+							contributionType: { columns: { publicId: true } },
+							bank: { columns: { publicId: true } },
+							contributorGroup: { columns: { publicId: true } },
+							contributorDistrict: { columns: { publicId: true } },
+							contributorService: { columns: { publicId: true } },
+						},
+					},
 				},
 			});
 
@@ -420,19 +499,17 @@ export const getReceipt = createServerFn()
 				receiptNo: Number(receipt.receiptNo),
 				contributionDate: dateFormat(receipt.contributionDate),
 				paymentMethod: firstDetail.paymentMethod,
-				bankId: firstDetail.bankId ?? null,
+				bankId: firstDetail.bank?.publicId ?? null,
 				reference: firstDetail.paymentReference ?? "",
 				details: receipt.details.map((detail) => ({
 					id: detail.id.toString(),
-					accountId: detail.contributionAccountId,
+					accountId: detail.contributionType.publicId,
 					category: detail.category,
-					contributorMemberId: detail.contributorMemberId,
-					contributorGroupId: detail.contributorGroupId,
-					contributorDistrictId: detail.contributorDistrictId,
-					contributorCongregationId: detail.contributorCongregationId,
-					contributorServiceId: detail.contributorServiceId,
+					contributorGroupId: detail.contributorGroup?.publicId ?? null,
+					contributorDistrictId: detail.contributorDistrict?.publicId ?? null,
+					contributorServiceId: detail.contributorService?.publicId ?? null,
 					amount: Number(detail.amount),
-					narration: detail.narration ?? undefined,
+					narration: detail.narration ?? null,
 				})),
 			} satisfies ReceiptsFormValues;
 		},
@@ -440,7 +517,7 @@ export const getReceipt = createServerFn()
 
 export const upsertReceipt = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(receiptsFormSchema)
+	.validator(receiptsFormSchema)
 	.handler(
 		async ({
 			data,

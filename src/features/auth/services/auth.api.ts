@@ -210,7 +210,7 @@ async function registerFailedLoginAttempt(user: LoginChallengeUser) {
 }
 
 export const loginFn = createServerFn({ method: "POST" })
-	.inputValidator(loginFormSchema)
+	.validator(loginFormSchema)
 	.handler(async ({ data }) => {
 		// const congregationId = Number(data.congregationId);
 		const congregation = await db.query.congregations.findFirst({
@@ -305,7 +305,7 @@ export const loginFn = createServerFn({ method: "POST" })
 	});
 
 export const requestPasswordResetFn = createServerFn({ method: "POST" })
-	.inputValidator(forgotPasswordFormSchema)
+	.validator(forgotPasswordFormSchema)
 	.handler(async ({ data }) => {
 		const congregationId = Number(data.congregationId);
 		const user = await findUserByUsernameAndCongregation(
@@ -387,7 +387,7 @@ export const resendPasswordResetCodeFn = createServerFn({
 });
 
 export const changePasswordFn = createServerFn({ method: "POST" })
-	.inputValidator(changePasswordFormSchema)
+	.validator(changePasswordFormSchema)
 	.handler(async ({ data }) => {
 		const { session, user } = await getPasswordResetUserOrRedirect();
 		const now = new Date();
