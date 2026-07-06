@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { CONTRIBUTION_CATEGORIES, PAYMENT_METHODS } from "#/db/schema";
-import { queryValidateSearch } from "#/lib/schemas";
+import {
+	nullableTrimmedString,
+	queryValidateSearch,
+	stringSchema,
+} from "#/lib/schemas";
 
 export const receiptsValidateSearch = queryValidateSearch.safeExtend({
 	dateRange: z
@@ -37,19 +41,19 @@ export const receiptsFormSchema = z
 				{ error: "Date must be before today" },
 			),
 		paymentMethod: z.enum(PAYMENT_METHODS),
-		bankId: z.number().min(1, { error: "Invalid bank selected" }).nullish(),
-		reference: z.string().min(1, "Reference is required"),
+		bankId: z.string().nullish(),
+		reference: stringSchema("Reference is required"),
 		details: z.array(
 			z
 				.object({
 					id: z.string(),
-					accountId: z.number().min(1, "Account is required"),
+					accountId: stringSchema("Account is required"),
 					category: z.enum(CONTRIBUTION_CATEGORIES),
-					contributorGroupId: z.number().nullish(),
-					contributorDistrictId: z.number().nullish(),
-					contributorServiceId: z.number().nullish(),
-					amount: z.number().min(1, "Amount is required"),
-					narration: z.string().optional(),
+					contributorGroupId: nullableTrimmedString,
+					contributorDistrictId: nullableTrimmedString,
+					contributorServiceId: nullableTrimmedString,
+					amount: z.number().positive({ error: "Amount must be positive" }),
+					narration: nullableTrimmedString,
 				})
 				.superRefine((data, ctx) => {
 					if (data.category === "group" && !data.contributorGroupId) {
