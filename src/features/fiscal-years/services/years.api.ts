@@ -28,11 +28,18 @@ export const getFinancialYearByDate = createServerFn()
 export const getFinancialYears = createServerFn()
 	.middleware([authMiddleware])
 	.handler(async () => {
-		return db.query.fiscalYears.findMany({
-			columns: { publicId: true, yearName: true },
+		const years = await db.query.fiscalYears.findMany({
+			columns: {
+				publicId: true,
+				yearName: true,
+				startDate: true,
+				endDate: true,
+			},
 			where: isNull(fiscalYears.deletedAt),
 			orderBy: (fiscalYears, { desc }) => [desc(fiscalYears.id)],
 		});
+
+		return years;
 	});
 
 export const getFinancialYearById = createServerFn()
