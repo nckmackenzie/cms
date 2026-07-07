@@ -190,7 +190,7 @@ const updateBudget = async ({
 
 export const getBudgetExpenseAccounts = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator(budgetExpenseAccountsInput)
+	.validator(budgetExpenseAccountsInput)
 	.handler(
 		async ({
 			data: { type },
@@ -234,7 +234,7 @@ export const getBudgetExpenseAccounts = createServerFn({ method: "GET" })
 
 export const getBudgets = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(queryValidateSearch)
+	.validator(queryValidateSearch)
 	.handler(async ({ data, context }) => {
 		return db
 			.select({
@@ -274,7 +274,7 @@ export const getBudgets = createServerFn()
 
 export const getBudgetById = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Budget is required"))
+	.validator(stringSchema("Budget is required"))
 	.handler(async ({ data, context }) => {
 		const budget = await db.query.budgetsHeader.findFirst({
 			where: and(
@@ -340,7 +340,7 @@ export const getBudgetById = createServerFn({ method: "GET" })
 
 export const upsertBudget = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(budgetFormSchema)
+	.validator(budgetFormSchema)
 	.handler(async ({ context, data }) => {
 		if (data.id) {
 			return updateBudget({
@@ -358,7 +358,7 @@ export const upsertBudget = createServerFn({ method: "POST" })
 
 export const deleteBudget = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Budget is required"))
+	.validator(stringSchema("Budget is required"))
 	.handler(async ({ data, context }) => {
 		const budget = await getBudget({
 			congregationId: context.user.congregationId,

@@ -13,6 +13,7 @@ import {
 	coaValidateSearch,
 } from "#/features/coa/utils/schemas";
 import { SOURCES } from "#/lib/constants";
+import { resolveIdByPublicId } from "#/lib/db-helpers";
 import { failure, success } from "#/lib/result";
 import { toTitleCase } from "#/lib/utils";
 import { authMiddleware } from "#/middleware/auth";
@@ -106,7 +107,7 @@ const createAccount = async (
 
 export const getAccounts = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator(coaValidateSearch)
+	.validator(coaValidateSearch)
 	.handler(
 		async ({
 			data: { search },
@@ -174,7 +175,7 @@ export const getBankAccounts = createServerFn()
 
 export const getPostingAccounts = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(z.object({ search: z.enum(ACCOUNT_TYPES).optional() }))
+	.validator(z.object({ search: z.enum(ACCOUNT_TYPES).optional() }))
 	.handler(
 		async ({
 			data: { search },
@@ -208,7 +209,7 @@ export const getPostingAccounts = createServerFn()
 
 export const upsertAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(accountsFormSchema)
+	.validator(accountsFormSchema)
 	.handler(
 		async ({
 			data,
@@ -267,7 +268,7 @@ export const upsertAccount = createServerFn({ method: "POST" })
 
 export const deleteAccount = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data }) => {
 		const accountId = Number(data);
 		if (Number.isNaN(accountId)) {
@@ -311,21 +312,18 @@ export const deleteAccount = createServerFn({ method: "POST" })
 
 export const getAccountByPublicId = createServerFn({ method: "GET" })
 	.middleware([authMiddleware])
-	.inputValidator((data: string) => data)
+	.validator((data: string) => data)
 	.handler(async ({ data }) => {
-		const account = await db.query.ledgerAccounts.findFirst({
-			columns: { id: true },
-			where: eq(ledgerAccounts.publicId, data),
-		});
-		if (!account) {
-			throw new Error("Account not found");
-		}
-		return account.id;
+		return resolveIdByPublicId(
+			ledgerAccounts,
+			eq(ledgerAccounts.publicId, data),
+			"Account",
+		);
 	});
 
 export const getTransactionJournal = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(
+	.validator(
 		z.object({
 			source: z.enum(SOURCES),
 			sourceId: z.string(),

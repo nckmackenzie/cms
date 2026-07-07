@@ -13,7 +13,13 @@ export const queryValidateSearchWithSheet = queryValidateSearch.safeExtend({
 });
 
 export const stringSchema = (errorMessage: string) =>
-	z.string().min(1, { error: errorMessage });
+	z.string().trim().min(1, { error: errorMessage });
+
+export const nullableTrimmedString = z
+	.string()
+	.trim()
+	.transform((value) => (value === "" || value === undefined ? null : value))
+	.nullable();
 
 export const paymentMethodSchema = () =>
 	z.enum(PAYMENT_METHODS, {

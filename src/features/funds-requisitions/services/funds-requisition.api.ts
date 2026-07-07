@@ -267,7 +267,7 @@ export const requisitionNoFn = createServerFn()
 
 export const getRequisitionByPublicId = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide Requisition"))
+	.validator(stringSchema("Provide Requisition"))
 	.handler(
 		async ({
 			data,
@@ -292,7 +292,7 @@ export const getRequisitionByPublicId = createServerFn()
 
 export const getRequisitions = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(fundsRequisitionValidateSearch)
+	.validator(fundsRequisitionValidateSearch)
 	.handler(
 		async ({
 			data,
@@ -367,7 +367,7 @@ export const getRequisitions = createServerFn()
 
 export const getRequisition = createServerFn()
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide Requisition"))
+	.validator(stringSchema("Provide Requisition"))
 	.handler(
 		async ({
 			data,
@@ -416,7 +416,7 @@ export const getRequisition = createServerFn()
 
 export const upsertFundRequistion = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(fundsRequisitionFormValues)
+	.validator(fundsRequisitionFormValues)
 	.handler(
 		async ({
 			data,
@@ -433,7 +433,7 @@ export const upsertFundRequistion = createServerFn({ method: "POST" })
 
 export const deleteFundRequisition = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide Requisition to delete"))
+	.validator(stringSchema("Provide Requisition to delete"))
 	.handler(
 		async ({
 			data,
@@ -470,7 +470,7 @@ export const deleteFundRequisition = createServerFn({ method: "POST" })
 
 export const approveRequisition = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(actionRequisitionFormValues)
+	.validator(actionRequisitionFormValues)
 	.handler(
 		async ({
 			data,
@@ -612,7 +612,7 @@ export const approveRequisition = createServerFn({ method: "POST" })
 
 export const rejectRequisition = createServerFn({ method: "POST" })
 	.middleware([authMiddleware])
-	.inputValidator(stringSchema("Provide Requisition to reject"))
+	.validator(stringSchema("Provide Requisition to reject"))
 	.handler(
 		async ({
 			data,
