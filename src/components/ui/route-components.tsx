@@ -42,6 +42,12 @@ import {
 	ShieldAlert,
 	WifiOff,
 } from "lucide-react";
+import {
+	Alert,
+	AlertAction,
+	AlertDescription,
+	AlertTitle,
+} from "#/components/ui/alert";
 
 /* ─── Keyframe animations not expressible as pure Tailwind utilities ─
    Tailwind v4 supports @keyframes in CSS but these are component-
@@ -384,6 +390,42 @@ export function RouteErrorComponent({ error, reset }: ErrorComponentProps) {
 				</div>
 			</div>
 		</>
+	);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   2b. COMPONENT ERROR COMPONENT
+   Small inline error state for a widget/section (e.g. a card or panel)
+   rather than a full route. Built on the shared Alert primitives.
+   ════════════════════════════════════════════════════════════════════ */
+type ComponentErrorProps = {
+	error: unknown;
+	reset?: () => void;
+};
+
+export function ComponentErrorComponent({ error, reset }: ComponentErrorProps) {
+	const message = error instanceof Error ? error.message : undefined;
+
+	return (
+		<Alert variant="destructive">
+			<AlertTriangle />
+			<AlertTitle>Something went wrong</AlertTitle>
+			<AlertDescription>
+				{message ?? "This section failed to load."}
+			</AlertDescription>
+			{reset && (
+				<AlertAction>
+					<button
+						onClick={reset}
+						type="button"
+						className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border border-destructive/40 text-destructive hover:bg-destructive/10 transition-colors duration-150 cursor-pointer"
+					>
+						<RefreshCw size={12} strokeWidth={2} />
+						Retry
+					</button>
+				</AlertAction>
+			)}
+		</Alert>
 	);
 }
 
