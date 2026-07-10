@@ -18,7 +18,8 @@ export const stringSchema = (errorMessage: string) =>
 export const nullableTrimmedString = z
 	.string()
 	.trim()
-	.transform((value) => (value === "" || value === undefined ? null : value))
+	.transform((value) => (value === "" ? undefined : value))
+	.optional()
 	.nullable();
 
 export const paymentMethodSchema = () =>
